@@ -2,6 +2,7 @@
 #include <iostream>
 #include <vector>
 #include <math.h>
+#include <algorithm>
 using namespace std;
 
 struct Point {
@@ -32,7 +33,7 @@ public:
 
     void CalculateA_b();
     void SolveSLAE();
-    void FormPortrait();
+    void GeneratePortrait();
 
 protected:
     vector<int> ia;

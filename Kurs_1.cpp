@@ -65,12 +65,14 @@ void GridAndSLAE::AllocateMemory()
 	iaja.resize(NoN);
 	b.resize(NoN);
 	x.resize(NoN);
+	al.resize(ja.size());
 }
 
 void GridAndSLAE::CalculateA_b()
 {
+	//FormPortrait();
+	GeneratePortrait();
 	AllocateMemory();
-	FormPortrait();
 	//
 	// Хранится только нижний треугольник
 	//
@@ -122,12 +124,12 @@ void GridAndSLAE::CalculateA_b()
 	//
 	for (int curFE = 0; curFE < NoN_fe; curFE++)
 	{
-		vector <double> nodes_local;
+		vector <int> nodes_local;
 		nodes_local.resize(8);
-		nodes_local[0] = fe[curFE].node1;
-		nodes_local[1] = fe[curFE].node2;
-		nodes_local[2] = fe[curFE].node3;
-		nodes_local[3] = fe[curFE].node4;
+		nodes_local[0] = fe[curFE].node1 + fe[curFE].bottom * NoN_xy;
+		nodes_local[1] = fe[curFE].node2 + fe[curFE].bottom * NoN_xy;
+		nodes_local[2] = fe[curFE].node3 + fe[curFE].bottom * NoN_xy;
+		nodes_local[3] = fe[curFE].node4 + fe[curFE].bottom * NoN_xy;
 
 		double x1 = xy[nodes_local[0]].x;
 		double y1 = xy[nodes_local[0]].y;
@@ -169,10 +171,10 @@ void GridAndSLAE::CalculateA_b()
 		for (int lvl = 0; lvl < NoN_z - 1; lvl++, curFE++) // Здесь как раз за это и отвечает этот цикл
 		{
 
-			nodes_local[4] = fe[curFE].node1 + NoN_xy;
-			nodes_local[5] = fe[curFE].node2 + NoN_xy;
-			nodes_local[6] = fe[curFE].node3 + NoN_xy;
-			nodes_local[7] = fe[curFE].node4 + NoN_xy;
+			nodes_local[4] = fe[curFE].node1 + fe[curFE].top * NoN_xy;
+			nodes_local[5] = fe[curFE].node2 + fe[curFE].top * NoN_xy;
+			nodes_local[6] = fe[curFE].node3 + fe[curFE].top * NoN_xy;
+			nodes_local[7] = fe[curFE].node4 + fe[curFE].top * NoN_xy;
 
 			double z1 = z[fe[curFE].bottom];
 			double z2 = z[fe[curFE].top];
@@ -245,7 +247,6 @@ void GridAndSLAE::CalculateA_b()
 			f_local[6] = FUN(numOfFun, x3, y3, z2);
 			f_local[7] = FUN(numOfFun, x4, y4, z2);
 
-
 			for (int i = 0; i < 8; i++) //Нужно потом более оптимально  умножение сделать
 			{
 				double sum = 0;
@@ -259,14 +260,18 @@ void GridAndSLAE::CalculateA_b()
 				b[i] = sum;
 			}
 
+			double Aij;
+			double lambda = 1, gamma = 1; //Не забыть их потом как кусочно лин. функциями сделать
 			for (int i = 0; i < 8; i++)
 			{
 				for (int j = 0; j <= i; j++)
 				{
-					iaja[nodes_local[i]].push_back(nodes_local[j]);
+					Aij = gamma * M_local[i][j] + lambda * G_local[i][j]; // Неправильно
+					int string = ia[nodes_local[i]+1];
+					int column = ja[string];
+					al[string + column] += Aij;
 				}
 			}
-
 
 			nodes_local[0] = nodes_local[4];
 			nodes_local[1] = nodes_local[5];
@@ -277,91 +282,55 @@ void GridAndSLAE::CalculateA_b()
 	}
 }
 
-void GridAndSLAE::FormPortrait()
+void GridAndSLAE::GeneratePortrait()
 {
-	int N = NoN;
-	int Kel = NoN_fe;
-	vector<vector<int>> list;
-	list.resize(2);
-
-	ia.resize(N + 1);
-	
-	vector<int> listbeg (N, -1);
-
-	int listsize = 0;
-	int NumberOfUnknows = 8; //8
-	vector<int> IndexOfUnknown(8, 0);
-	for (int ielem = 0; ielem < Kel; ielem++)
+	iaja.resize(NoN);
+	vector<int> nodes_local(8, 0);
+	for (int curFE = 0; curFE < NoN_fe; curFE++)
 	{
-		IndexOfUnknown[0] = fe[ielem].node1;
-		IndexOfUnknown[1] = fe[ielem].node2;
-		IndexOfUnknown[2] = fe[ielem].node3;
-		IndexOfUnknown[3] = fe[ielem].node4;
-		IndexOfUnknown[4] = fe[ielem].node1 + NoN_xy;
-		IndexOfUnknown[5] = fe[ielem].node2 + NoN_xy;
-		IndexOfUnknown[6] = fe[ielem].node3 + NoN_xy;
-		IndexOfUnknown[7] = fe[ielem].node4 + NoN_xy;
-
-		for (int i = 0; i < NumberOfUnknows; i++)
+		nodes_local[0] = fe[curFE].node1 + fe[curFE].bottom * NoN_xy;
+		nodes_local[1] = fe[curFE].node2 + fe[curFE].bottom * NoN_xy;
+		nodes_local[2] = fe[curFE].node3 + fe[curFE].bottom * NoN_xy;
+		nodes_local[3] = fe[curFE].node4 + fe[curFE].bottom * NoN_xy;
+		nodes_local[4] = fe[curFE].node1 + fe[curFE].top * NoN_xy;
+		nodes_local[5] = fe[curFE].node2 + fe[curFE].top * NoN_xy;
+		nodes_local[6] = fe[curFE].node3 + fe[curFE].top * NoN_xy;
+		nodes_local[7] = fe[curFE].node4 + fe[curFE].top * NoN_xy;
+		for (int i = 0; i < 8; i++)
 		{
-			int k = IndexOfUnknown[i];
-			for (int j = 1; j < NumberOfUnknows; j++)
+			int node_i = nodes_local[i];
+			for (int j = 0; j < 8; j++)
 			{
-				int ind1 = k;
-				int ind2 = IndexOfUnknown[j];
-				if (ind2 < ind1)
+				int node_j = nodes_local[j];
+				if (node_i > node_j)
 				{
-					ind1 = ind2;
-					ind2 = k;
-				}
-				int iaddr = listbeg[ind2];
-				if (iaddr == -1)
-				{
-					listsize++;
-					listbeg[ind2] = listsize;
-					list[0].push_back(ind1);
-					list[1].push_back(-1);
-				}
-				else
-				{
-					for (; list[0][iaddr] < ind1 and list[1][iaddr] > -1; i++)
+					int flag = 0;
+					for (int k = 0; k < iaja[node_i].size() and flag != 1; k++)
 					{
-						iaddr = list[1][iaddr];
+						if (iaja[node_i][k] == node_j) 
+						{
+							flag = 1;
+							continue;
+						}
 					}
-					if (list[0][iaddr] > ind1)
-					{
-						listsize++;
-						list[0][listsize] = list[0][iaddr];
-						list[1][listsize] = list[1][iaddr];
-						list[0][iaddr] = ind1;
-						list[1][iaddr] = listsize;
-					}
-					else if (list[0][iaddr] < ind1)
-					{
-						listsize++;
-						list[1][iaddr] = listsize;
-						list[0].push_back(ind1);
-						list[1].push_back(-1);
-					} 
-					else
-					{
-						cout << "И что это такое?!";
-					}
+					if (!flag)
+						iaja[node_i].push_back(node_j);
 				}
 			}
 		}
-	} 
-	ia[0] = 1;
-	for (int i = 0; i < N; i++)
+	}
+	// Сортировка
+	for (int i = 0; i < NoN; i++)
+		sort(iaja[i].begin(), iaja[i].end());
+
+	ia.resize(NoN + 1);
+	ia[0] = 0;
+	for (int i = 0; i < NoN; i++)
 	{
-		ia[i + 1] = ia[i];
-		int iaddr = listbeg[i];
-		for (;iaddr != -1;)
-		{
-			ja[ia[i + 1]] = list[0][iaddr];
-			ia[i + 1]++;
-			iaddr = list[1][iaddr];
-		}
+		int size = iaja[i].size();
+		ia[i + 1] = ia[i] + size;
+		for (int j = 0; j < size; j++)
+			ja.push_back(iaja[i][j]);
 	}
 }
 
