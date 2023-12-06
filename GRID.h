@@ -32,6 +32,7 @@ public:
 
     void CalculateA_b();
     void SolveSLAE();
+    void FormPortrait();
 
 protected:
     vector<int> ia;
