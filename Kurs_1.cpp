@@ -319,8 +319,8 @@ void GridAndSLAE::FormPortrait()
 				{
 					listsize++;
 					listbeg[ind2] = listsize;
-					list[0][listsize] = ind1;
-					list[1][listsize] = -1;
+					list[0].push_back(ind1);
+					list[1].push_back(-1);
 				}
 				else
 				{
@@ -340,8 +340,8 @@ void GridAndSLAE::FormPortrait()
 					{
 						listsize++;
 						list[1][iaddr] = listsize;
-						list[0][listsize] = ind1;
-						list[1][listsize] = -1;
+						list[0].push_back(ind1);
+						list[1].push_back(-1);
 					} 
 					else
 					{
