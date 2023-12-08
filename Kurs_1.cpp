@@ -62,6 +62,7 @@ double sign(double x)
 
 void GridAndSLAE::AllocateMemory()
 {
+	di.resize(NoN);
 	iaja.resize(NoN);
 	b.resize(NoN);
 	x.resize(NoN);
@@ -124,24 +125,24 @@ void GridAndSLAE::CalculateA_b()
 	//
 	for (int curFE = 0; curFE < NoN_fe; curFE++)
 	{
-		vector <int> nodes_local;
-		nodes_local.resize(8);
-		nodes_local[0] = fe[curFE].node1 + fe[curFE].bottom * NoN_xy;
-		nodes_local[1] = fe[curFE].node2 + fe[curFE].bottom * NoN_xy;
-		nodes_local[2] = fe[curFE].node3 + fe[curFE].bottom * NoN_xy;
-		nodes_local[3] = fe[curFE].node4 + fe[curFE].bottom * NoN_xy;
+		vector <int> nodes_global;
+		nodes_global.resize(8);
+		nodes_global[0] = fe[curFE].node1 + fe[curFE].bottom * NoN_xy;
+		nodes_global[1] = fe[curFE].node2 + fe[curFE].bottom * NoN_xy;
+		nodes_global[2] = fe[curFE].node3 + fe[curFE].bottom * NoN_xy;
+		nodes_global[3] = fe[curFE].node4 + fe[curFE].bottom * NoN_xy;
 
-		double x1 = xy[nodes_local[0]].x;
-		double y1 = xy[nodes_local[0]].y;
+		double x1 = xy[nodes_global[0]].x;
+		double y1 = xy[nodes_global[0]].y;
 
-		double x2 = xy[nodes_local[1]].x;
-		double y2 = xy[nodes_local[1]].y;
+		double x2 = xy[nodes_global[1]].x;
+		double y2 = xy[nodes_global[1]].y;
 
-		double x3 = xy[nodes_local[2]].x;
-		double y3 = xy[nodes_local[2]].y;
+		double x3 = xy[nodes_global[2]].x;
+		double y3 = xy[nodes_global[2]].y;
 
-		double x4 = xy[nodes_local[3]].x;
-		double y4 = xy[nodes_local[3]].y;
+		double x4 = xy[nodes_global[3]].x;
+		double y4 = xy[nodes_global[3]].y;
 
 		double a0 = ((x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1));
 		double a1 = ((x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3));
@@ -171,10 +172,10 @@ void GridAndSLAE::CalculateA_b()
 		for (int lvl = 0; lvl < NoN_z - 1; lvl++, curFE++) // Здесь как раз за это и отвечает этот цикл
 		{
 
-			nodes_local[4] = fe[curFE].node1 + fe[curFE].top * NoN_xy;
-			nodes_local[5] = fe[curFE].node2 + fe[curFE].top * NoN_xy;
-			nodes_local[6] = fe[curFE].node3 + fe[curFE].top * NoN_xy;
-			nodes_local[7] = fe[curFE].node4 + fe[curFE].top * NoN_xy;
+			nodes_global[4] = fe[curFE].node1 + fe[curFE].top * NoN_xy;
+			nodes_global[5] = fe[curFE].node2 + fe[curFE].top * NoN_xy;
+			nodes_global[6] = fe[curFE].node3 + fe[curFE].top * NoN_xy;
+			nodes_global[7] = fe[curFE].node4 + fe[curFE].top * NoN_xy;
 
 			double z1 = z[fe[curFE].bottom];
 			double z2 = z[fe[curFE].top];
@@ -260,23 +261,30 @@ void GridAndSLAE::CalculateA_b()
 				b[i] = sum;
 			}
 
-			double Aij;
+			double Aij, Aii;
 			double lambda = 1, gamma = 1; //Не забыть их потом как кусочно лин. функциями сделать
 			for (int i = 0; i < 8; i++)
 			{
-				for (int j = 0; j <= i; j++)
+				Aii = gamma * M_local[i][i] + lambda * G_local[i][i];
+				di[nodes_global[i]] += Aii;
+
+				for (int j = i-1; j >=0; j--)
 				{
-					Aij = gamma * M_local[i][j] + lambda * G_local[i][j]; // Неправильно
-					int string = ia[nodes_local[i]+1];
-					int column = ja[string];
-					al[string + column] += Aij;
+					for (int k = ia[nodes_global[i]]; k < ia[nodes_global[i]+1]; k++)
+					{ 
+						if (ja[k] == nodes_global[j])
+						{
+							Aij = gamma * M_local[i][j] + lambda * G_local[i][j]; // Неправильно
+							al[k] = Aij;
+						}
+					}
 				}
 			}
 
-			nodes_local[0] = nodes_local[4];
-			nodes_local[1] = nodes_local[5];
-			nodes_local[2] = nodes_local[6];
-			nodes_local[3] = nodes_local[7];
+			nodes_global[0] = nodes_global[4];
+			nodes_global[1] = nodes_global[5];
+			nodes_global[2] = nodes_global[6];
+			nodes_global[3] = nodes_global[7];
 		}
 		
 	}
