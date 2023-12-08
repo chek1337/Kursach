@@ -21,6 +21,7 @@ void GridAndSLAE::InputFromFile(FILE* inFE, FILE* inXY, FILE* inZ)
 	// Запись информации об узлах конечных элементах
 	fscanf_s(inFE, "%d", &NoN_fe);
 	fe.resize(NoN_fe);
+	// Мб тут сделать специально сортировку, чтобы номер узлов всегда шли бы на увелечение
 	for (int i = 0; i < NoN_fe; i++)
 	{
 		fscanf_s(inFE, "%d", &fe[i].node1);
@@ -239,10 +240,10 @@ void GridAndSLAE::CalculateA_b()
 			vector<double> f_local;
 			f_local.resize(8);
 
-			f_local[0] = FUN(numOfFun, x1, y1, z1);
-			f_local[1] = FUN(numOfFun, x2, y2, z1);
-			f_local[2] = FUN(numOfFun, x3, y3, z1);
-			f_local[3] = FUN(numOfFun, x4, y4, z1);
+			f_local[0] = FUN(numOfFun, x1, y1, z1); // Вот здесь высока вероятность ошибки
+			f_local[1] = FUN(numOfFun, x2, y2, z1); // так как я неявно считаю значения функции
+			f_local[2] = FUN(numOfFun, x3, y3, z1); // в лок. узлах. Если бы нумерации узлов в КЭ поменялась
+			f_local[3] = FUN(numOfFun, x4, y4, z1); // то может выскочить ошибка
 			f_local[4] = FUN(numOfFun, x1, y1, z2);
 			f_local[5] = FUN(numOfFun, x2, y2, z2);
 			f_local[6] = FUN(numOfFun, x3, y3, z2);
@@ -275,7 +276,7 @@ void GridAndSLAE::CalculateA_b()
 						if (ja[k] == nodes_global[j])
 						{
 							Aij = gamma * M_local[i][j] + lambda * G_local[i][j]; // Неправильно
-							al[k] = Aij;
+							al[k] += Aij;
 						}
 					}
 				}
