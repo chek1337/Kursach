@@ -16,7 +16,7 @@ double FUN(int i, double x, double y, double z)
 }
 
 
-void GridAndSLAE::InputFromFile(FILE* inFE, FILE* inXY, FILE* inZ)
+void GridAndSLAE::InputFromFile(FILE* inFE, FILE* inXY, FILE* inZ, FILE* inFirstBC, FILE* inSecondBC, FILE* inThirdBC)
 {
 	// Запись информации об узлах конечных элементах
 	fscanf_s(inFE, "%d", &NoN_fe);
@@ -49,6 +49,37 @@ void GridAndSLAE::InputFromFile(FILE* inFE, FILE* inXY, FILE* inZ)
 		fscanf_s(inZ, "%lf", &z[i]);
 	}
 	NoN = NoN_xy * NoN_z;
+
+	fscanf(inFirstBC, "%d", FirstBC);
+	FirstBC.resize(Nof_FisrtBC);
+	for (int i = 0; i < Nof_FisrtBC; i++)
+	{
+		fscanf(inFirstBC, "%d", FirstBC[i].node);
+		fscanf(inFirstBC, "%lf", FirstBC[i].ug);
+	}
+
+	fscanf(inFirstBC, "%d", Nof_SecondBC);
+	SecondBC.resize(Nof_SecondBC);
+	for (int i = 0; i < Nof_SecondBC; i++)
+	{
+		fscanf(inFirstBC, "%d", SecondBC[i].node1);
+		fscanf(inFirstBC, "%d", SecondBC[i].node2);
+		fscanf(inFirstBC, "%d", SecondBC[i].node3);
+		fscanf(inFirstBC, "%d", SecondBC[i].node4);
+		fscanf(inFirstBC, "%lf", SecondBC[i].num_teta);
+	}
+
+	fscanf(inFirstBC, "%d", Nof_ThirdBC);
+	ThirdBC.resize(Nof_ThirdBC);
+	for (int i = 0; i < Nof_ThirdBC; i++)
+	{
+		fscanf(inFirstBC, "%d", ThirdBC[i].node1);
+		fscanf(inFirstBC, "%d", ThirdBC[i].node2);
+		fscanf(inFirstBC, "%d", ThirdBC[i].node3);
+		fscanf(inFirstBC, "%d", ThirdBC[i].node4);
+		fscanf(inFirstBC, "%d", ThirdBC[i].num_ub);
+		fscanf(inFirstBC, "%lf", ThirdBC[i].beta);
+	}
 }
 
 double sign(double x)
@@ -124,7 +155,7 @@ void GridAndSLAE::CalculateA_b()
 	//
 	// Сборка локальных матриц
 	//
-	for (int curFE = 0; curFE < NoN_fe; curFE++)
+	for (int curFE = 0; curFE < NoN_fe; )
 	{
 		vector <int> nodes_global;
 		nodes_global.resize(8);
@@ -133,17 +164,17 @@ void GridAndSLAE::CalculateA_b()
 		nodes_global[2] = fe[curFE].node3 + fe[curFE].bottom * NoN_xy;
 		nodes_global[3] = fe[curFE].node4 + fe[curFE].bottom * NoN_xy;
 
-		double x1 = xy[nodes_global[0]].x;
-		double y1 = xy[nodes_global[0]].y;
+		double x1 = xy[fe[curFE].node1].x;
+		double y1 = xy[fe[curFE].node1].y;
 
-		double x2 = xy[nodes_global[1]].x;
-		double y2 = xy[nodes_global[1]].y;
+		double x2 = xy[fe[curFE].node2].x;
+		double y2 = xy[fe[curFE].node2].y;
 
-		double x3 = xy[nodes_global[2]].x;
-		double y3 = xy[nodes_global[2]].y;
+		double x3 = xy[fe[curFE].node3].x;
+		double y3 = xy[fe[curFE].node3].y;
 
-		double x4 = xy[nodes_global[3]].x;
-		double y4 = xy[nodes_global[3]].y;
+		double x4 = xy[fe[curFE].node4].x;
+		double y4 = xy[fe[curFE].node4].y;
 
 		double a0 = ((x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1));
 		double a1 = ((x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3));
@@ -234,7 +265,7 @@ void GridAndSLAE::CalculateA_b()
 			// локальной базисной функции
 
 			vector<double> b_local;
-			b.resize(8);
+			b_local.resize(8);
 
 			int numOfFun = 0; // нужен будет потом, когда будут разные функции на разных КЭ 
 			vector<double> f_local;
@@ -259,7 +290,7 @@ void GridAndSLAE::CalculateA_b()
 					else
 						sum += f_local[j] * M_local[j][i];
 				}
-				b[i] = sum;
+				b_local[i] = sum;
 			}
 
 			double Aij, Aii;
@@ -269,7 +300,7 @@ void GridAndSLAE::CalculateA_b()
 				Aii = gamma * M_local[i][i] + lambda * G_local[i][i];
 				di[nodes_global[i]] += Aii;
 
-				for (int j = i-1; j >=0; j--)
+				for (int j = i-1; j >= 0; j--)
 				{
 					for (int k = ia[nodes_global[i]]; k < ia[nodes_global[i]+1]; k++)
 					{ 
@@ -282,12 +313,144 @@ void GridAndSLAE::CalculateA_b()
 				}
 			}
 
+			for (int i = 0; i < 8; i++)
+			{
+				b[nodes_global[i]] += b_local[i];
+			}
+
 			nodes_global[0] = nodes_global[4];
 			nodes_global[1] = nodes_global[5];
 			nodes_global[2] = nodes_global[6];
 			nodes_global[3] = nodes_global[7];
 		}
 		
+	}
+}
+
+void GridAndSLAE::SecondBoundaryConditions()
+{
+	vector<vector<double>>  MXorY_0 { {2}, {1, 2} };
+	vector<vector<double>>  MXorY;
+	MXorY.resize(2);
+	for (int i = 0; i < 2; i++)
+		MXorY[i].resize(i + 1);
+
+	vector<vector<double>>  Mz_0 = { {2}, {1, 2} };
+	vector<vector<double>>  Mz;
+	Mz.resize(2);
+	for (int i = 0; i < 2; i++)
+		Mz[i].resize(i + 1);
+
+	vector<vector<double>>  MXZorYZ;
+	MXZorYZ.resize(4);
+	for (int i = 0; i < 4; i++)
+		Mz[i].resize(i + 1);
+
+	vector<double> bS2_local(4, 0);
+
+	for (int curSecondBC = 0; curSecondBC < Nof_SecondBC; curSecondBC++)
+	{
+		int node1 = SecondBC[curSecondBC].node1;
+		int node2 = SecondBC[curSecondBC].node2;
+		int node3 = SecondBC[curSecondBC].node3;
+		int node4 = SecondBC[curSecondBC].node4;
+		double x1 = xy[node1 % NoN_xy].x;
+		double x2 = xy[node2 % NoN_xy].x;
+		double y1 = xy[node1 % NoN_xy].y;
+		double y2 = xy[node2 % NoN_xy].y;
+	
+
+		div_t result = div(node1, NoN_xy);
+		double z1 = z[result.quot];
+		double z2 = z[result.quot + 1];
+		double h_z = z2 - z1;
+
+		vector<double> teta_local(4, 0);
+		int num_teta_local = SecondBC[curSecondBC].num_teta;
+		teta_local[0] = FUNteta(num_teta_local, x1, y1, z1);
+		teta_local[1] = FUNteta(num_teta_local, x2, y2, z1);
+		teta_local[2] = FUNteta(num_teta_local, x1, y1, z2);
+		teta_local[3] = FUNteta(num_teta_local, x2, y2, z2);
+
+		// Определить что это - боковая грань или основание? 
+		if ((node1 % NoN_xy) == (node3 % NoN_xy) && (node2 % NoN_xy) == (node4 % NoN_xy))
+		{
+			// Значит боковая грань
+			// Будем обозначать матрицу массы для x/y как M_XorY (смотря паралельно какой оси находится грань)
+			// Будем искать матрицу массы для краевого условия как M_XorY * Mz
+			
+			if ((node1 + 1) == node2) // значит боковая грань поралельна Ox. Я предполагаю что нумерация у узлов корректная
+			{
+				double h_x = x2 - x1;
+			
+				for (int i = 0; i < 4; i++)
+					for (int j = 0; j <= i; j++)
+						MXorY[i][j] = h_x / 6. * MXorY_0[i][j];
+
+			}
+			else if ((node1 % NoN_xy) == (node3 % NoN_xy)) // значит боковая грань поралельна Oy.
+			{
+				double h_y = y2 - y1;
+				for (int i = 0; i < 4; i++)
+					for (int j = 0; j <= i; j++)
+						MXorY[i][j] = h_y / 6. * MXorY_0[i][j];
+			}
+			else {
+				cout << "Словил какую-ту херь в 2ом краевом\n";
+			}
+
+			for (int i = 0; i < 4; i++)
+				for (int j = 0; j <= i; j++)
+					Mz[i][j] = h_z / 6. * Mz_0[i][j];
+
+			// стр 234 кирпича
+			// если кто-то придумает как это красиво можно в цикле сделать - буду рад
+			// а пока тупо скатаю формулы (при учете того, что у меня нижний треугольник, а в кирпиче верхний)
+			// но лучше перепроверить все равно
+			MXZorYZ[0][0] = MXorY[0][0] * Mz[0][0];
+			MXZorYZ[1][0] = MXorY[1][0] * Mz[0][0];
+			MXZorYZ[2][0] = MXorY[0][0] * Mz[1][0];
+			MXZorYZ[3][0] = MXorY[1][0] * Mz[1][0];
+
+			MXZorYZ[1][1] = MXorY[1][1] * Mz[0][0];
+			MXZorYZ[2][1] = MXorY[1][0] * Mz[1][0];
+			MXZorYZ[3][1] = MXorY[1][1] * Mz[1][0];
+
+			MXZorYZ[2][2] = MXorY[0][0] * Mz[1][1];
+			MXZorYZ[3][2] = MXorY[1][0] * Mz[1][1];
+
+			MXZorYZ[3][3] = MXorY[1][1] * Mz[1][1];
+
+			
+			for (int i = 0; i < 8; i++) //Нужно потом более оптимально  умножение сделать
+			{
+				double sum = 0;
+				for (int j = 0; j < 8; j++)
+				{
+					if (i > j)
+						sum += teta_local[j] * MXZorYZ[i][j];
+					else
+						sum += teta_local[j] * MXZorYZ[j][i];
+				}
+				bS2_local[i] = sum;
+			}
+		}
+		else if(node1 == node2 && node3 == node4)
+		{
+			// Иначе основание
+
+		}
+	}
+}
+
+double GridAndSLAE::FUNteta(int number, double x, double y, double z)
+{
+	switch (number)
+	{
+	case 1:
+		return x * y;
+	default:
+		break;
 	}
 }
 
