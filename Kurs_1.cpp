@@ -5,7 +5,8 @@ double FUN(int number, double x, double y, double z)
 	switch (number)
 	{
 	case 0:
-		return 0.4*(5. + 0.2*x + y + 30.*z + 0.5*x*y + x*z + 10.*y*z + x*y*z);
+		//return 0.4*(5. + 0.2*x + y + 30.*z + 0.5*x*y + x*z + 10.*y*z + x*y*z);
+		return x + y + z;
 		break;
 	case 1:
 
@@ -20,7 +21,8 @@ double LAMBDA(int number)
 	switch (number)
 	{
 	case 0:
-		return 5.;
+		//return 5.;
+		return 1;
 		break;
 	case 1:
 
@@ -35,7 +37,8 @@ double GAMMA(int number)
 	switch (number)
 	{
 	case 0:
-		return 0.4;
+		//return 0.4;
+		return 1;
 		break;
 	case 1:
 
@@ -166,10 +169,18 @@ double sign(double x)
 void GridAndSLAE::AllocateMemory()
 {
 	di.resize(NoN);
-	iaja.resize(NoN);
 	b.resize(NoN);
 	x.resize(NoN);
 	al.resize(ja.size());
+
+	alLU.resize(al.size());
+	diLU.resize(NoN);
+	r.resize(NoN);
+	z.resize(NoN);
+	x0.resize(NoN);
+	tmp.resize(NoN);
+
+	iaja.resize(NoN);
 }
 
 void GridAndSLAE::CalculateA_b()
@@ -488,6 +499,7 @@ void GridAndSLAE::SecondBoundaryConditions()
 			// если кто-то придумает как это красиво можно в цикле сделать - буду рад
 			// а пока тупо скатаю формулы (при учете того, что у меня нижний треугольник, а в кирпиче верхний)
 			// но лучше перепроверить все равно
+			// UPD: на стр 331 и 333 есть
 			M_XYorXZorYZ[0][0] = MXorY[0][0] * Mz[0][0];
 			M_XYorXZorYZ[1][0] = MXorY[1][0] * Mz[0][0];
 			M_XYorXZorYZ[2][0] = MXorY[0][0] * Mz[1][0];
@@ -619,10 +631,10 @@ void GridAndSLAE::ThirdBoundaryConditions() // ctrl+c -> ctrl+v из SecondBound
 			double z2 = z[result.quot + 1];
 			double h_z = z2 - z1;
 
-			ubeta_local[0] = TETA(num_ubeta_local, x1, y1, z1);
-			ubeta_local[1] = TETA(num_ubeta_local, x2, y2, z1);
-			ubeta_local[2] = TETA(num_ubeta_local, x1, y1, z2);
-			ubeta_local[3] = TETA(num_ubeta_local, x2, y2, z2);
+			ubeta_local[0] = UBETA(num_ubeta_local, x1, y1, z1);
+			ubeta_local[1] = UBETA(num_ubeta_local, x2, y2, z1);
+			ubeta_local[2] = UBETA(num_ubeta_local, x1, y1, z2);
+			ubeta_local[3] = UBETA(num_ubeta_local, x2, y2, z2);
 
 			if ((nodes_global[0] + 1) == nodes_global[1]) // значит боковая грань поралельна Ox. Я предполагаю что нумерация у узлов корректная
 				h_XorY = x2 - x1;
@@ -681,10 +693,10 @@ void GridAndSLAE::ThirdBoundaryConditions() // ctrl+c -> ctrl+v из SecondBound
 			double a1 = ((x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3));
 			double a2 = ((y3 - y1) * (x4 - x2) - (x3 - x1) * (y4 - y2));
 
-			ubeta_local[0] = TETA(num_ubeta_local, x1, y1, zlvl);
-			ubeta_local[1] = TETA(num_ubeta_local, x2, y2, zlvl);
-			ubeta_local[2] = TETA(num_ubeta_local, x3, y3, zlvl);
-			ubeta_local[3] = TETA(num_ubeta_local, x4, y4, zlvl);
+			ubeta_local[0] = UBETA(num_ubeta_local, x1, y1, zlvl);
+			ubeta_local[1] = UBETA(num_ubeta_local, x2, y2, zlvl);
+			ubeta_local[2] = UBETA(num_ubeta_local, x3, y3, zlvl);
+			ubeta_local[3] = UBETA(num_ubeta_local, x4, y4, zlvl);
 
 			for (int i = 0; i < 4; i++) // Формирование локальной матрицы массы для Oxy
 				for (int j = 0; j <= i; j++)
@@ -717,10 +729,27 @@ void GridAndSLAE::ThirdBoundaryConditions() // ctrl+c -> ctrl+v из SecondBound
 			bS3_local[i] = sum;
 		}
 		for (int i = 0; i < 4; i++)
-			b[nodes_global[i]] += bS3_local[i];
+			b[nodes_global[i]] += beta * bS3_local[i];
 	}
 }
 
+
+void GridAndSLAE::FirstBoundaryConditions()
+{
+	for (int curFisrtBC = Nof_FisrtBC-1; curFisrtBC >= 0; curFisrtBC--)
+	{
+		int node = FirstBC[curFisrtBC].node;
+		double ug = FirstBC[curFisrtBC].ug;
+		di[node] = 1;
+		b[node] = ug;
+		for (int k = ia[node]; k < ia[node + 1]; k++)
+		{
+			int j = ja[k];
+			b[j] -= ug * al[k];
+			al[k] = 0;
+		}
+	}
+}
 void GridAndSLAE::GeneratePortrait()
 {
 	iaja.resize(NoN);
@@ -772,6 +801,8 @@ void GridAndSLAE::GeneratePortrait()
 			ja.push_back(iaja[i][j]);
 	}
 }
+
+
 
 double GridAndSLAE::Phi(double e, double n, int i, int j, double b1, double b2, double b3, double b4, double b5, double b6, double a0, double a1, double a2) // Ммммммм список аргументов
 {
@@ -874,71 +905,3 @@ double GridAndSLAE::Gauss3_Gxy(int i, int j, double b1, double b2, double b3, do
 	sum /= 4.;
 	return sum;
 }
-
-void GridAndSLAE::OutputDense()
-{
-	int flagfound = 0;
-	for (int i = 0; i < NoN; i++)
-	{
-		int k = ia[i + 1] - ia[i];
-		if (k == 0)
-		{
-			for (int j = 0; j < i; j++)
-			{
-				printf(REALOUTD, 0.0);
-			}
-		}
-		else
-		{
-			int lastj = 0;
-			for (int j = ia[i]; j < ia[i + 1]; j++) 
-			{
-				for (int p = lastj; p < ja[j]; p++) 
-				{
-					printf(REALOUTD, 0.0);
-				}
-				printf(REALOUTD, 216*al[j]); // ТУТ ДОБАВИЛ 216
-				lastj = ja[j] + 1;
-			}
-			for (int j = lastj; j < i; j++)
-			{
-				printf(REALOUTD, 0.0);
-			}
-		}
-
-		printf(REALOUTD, 216 * di[i]); // ТУТ ДОБАВИЛ 216
-
-		for (int j = i + 1; j < NoN; j++)
-		{
-			k = ia[j + 1] - ia[j];
-			if (k == 0) {
-				printf(REALOUTD, 0.0);
-			}
-			else
-			{
-				flagfound = 0;
-				for (k = ia[j]; k < ia[j + 1]; k++)
-				{
-
-					if (ja[k] == i)
-					{
-						printf(REALOUTD, 216 * al[k]); // ТУТ ДОБАВИЛ 216
-						flagfound = 1;
-						break;
-					}
-				}
-				if (flagfound == 0)
-					printf(REALOUTD, 0.0);
-			}
-		}
-		printf("\n");
-	}
-	printf("\n");
-
-	for (int i = 0; i < NoN; i++)
-	{
-		printf("%.15lf\n", 216 * b[i]); // ТУТ ДОБАВИЛ 216
-	}
-}
-
-

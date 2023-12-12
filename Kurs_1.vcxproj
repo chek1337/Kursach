@@ -129,6 +129,7 @@
   <ItemGroup>
     <ClCompile Include="Kurs_1.cpp" />
     <ClCompile Include="MainProg.cpp" />
+    <ClCompile Include="SLAEsolver.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="GRID.h" />
