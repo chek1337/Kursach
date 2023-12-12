@@ -31,7 +31,7 @@ struct SecondBoundary
 struct ThirdBoundary
 {
     int node1, node2, node3, node4; // x1y1, x2y1, x1y2, x2y2
-    int num_ub;
+    int num_ubeta;
     double beta;
 };
 
@@ -57,6 +57,7 @@ public:
     void InputFromFile(FILE* inFE, FILE* inXY, FILE* inZ, FILE* inFirstBC, FILE* inSecondBC, FILE* inThirdBC);
     void CalculateA_b();
     void SecondBoundaryConditions();
+    void ThirdBoundaryConditions();
     //void SolveSLAE();
     void GeneratePortrait();
    
