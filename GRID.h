@@ -3,6 +3,8 @@
 #include <vector>
 #include <math.h>
 #include <algorithm>
+
+#define REALOUTD "%.15f\t"
 using namespace std;
 
 struct Point {
@@ -14,6 +16,7 @@ struct FiniteElement
 {
     int node1, node2, node3, node4; // x1y1, x2y1, x1y2, x2y2
     int bottom, top; //z1, z2
+    int region;
 };
 
 struct FirstBoundary
@@ -58,6 +61,7 @@ public:
     void CalculateA_b();
     void SecondBoundaryConditions();
     void ThirdBoundaryConditions();
+    void OutputDense();
     //void SolveSLAE();
     void GeneratePortrait();
    
@@ -75,7 +79,8 @@ protected:
 
     double Gauss3_Gxy(int i, int j, double b1, double b2, double b3, double b4, double b5, double b6, double a0, double a1, double a2);
     double Phi(double e, double n, int i, int j, double b1, double b2, double b3, double b4, double b5, double b6, double a0, double a1, double a2);
-    double FUNteta(int number, double x, double y, double z);
+    double TETA(int number, double x, double y, double z);
+    double UBETA(int number, double x, double y, double z);
     void AllocateMemory();
 };
 
