@@ -67,13 +67,19 @@ public:
     void OutputLUDense();
     //void SolveSLAE();
     
-    void MSGForSymMatrixWithLuSqP();
+    void MSGForNonSymMatrixWithLuSqP();
+    void MatrixUVectorMultiplicationLU(vector<double>& upperTringMat, vector<double>& diag, vector<double>& vectorMult, vector<double>& vectorOut);
+    void TransposedMatrixVectorMultiplication(vector<double>& vectorMult, vector<double>& vectorOut);
+    void CalculateZ_LUsq(vector<double>& vectorOut);
+    double CalculateRelativeDiscrepancy(double norm);
+    void VectorSubtract(vector<double>& first, vector<double>& second, vector<double>& result);
 
 protected:
     int maxiter = 10000;
     vector<int> ia;
     vector<int> ja;
     vector<double> al;
+    vector<double> au;
     vector<double> di;
     vector<double> x;
     vector<double> b;
@@ -82,6 +88,7 @@ protected:
     vector<double> tmp;
     vector<double> x0;
     vector<double> alLU;
+    vector<double> auLU;
     vector<double> diLU;
     vector<vector<int>> iaja;
     double eps = 1e-13;

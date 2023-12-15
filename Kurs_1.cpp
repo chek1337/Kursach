@@ -4,14 +4,21 @@ double FUN(int number, double x, double y, double z)
 {
 	switch (number)
 	{
+	/*case 0:
+		return 0.4*(5. + 0.2*x + y + 30.*z + 0.5*x*y + x*z + 10.*y*z + x*y*z);*/
+		//return x + y + z;
+		//break;
 	case 0:
-		//return 0.4*(5. + 0.2*x + y + 30.*z + 0.5*x*y + x*z + 10.*y*z + x*y*z);
-		return x + y + z;
+		return 8.*x*(y*z + z + y + 1.);
 		break;
 	case 1:
-
+		return 0;
+		break;
+	case 2:
+		return 3.*x*z*(y+1);
 		break;
 	default:
+		throw "Ошибка в FUN";
 		break;
 	}
 }
@@ -20,14 +27,21 @@ double LAMBDA(int number)
 {
 	switch (number)
 	{
+	//case 0:
+	//	return 5.;
+		//return 1;
+		/*break;*/
 	case 0:
-		//return 5.;
 		return 1;
 		break;
 	case 1:
-
+		return 2;
+		break;
+	case 2:
+		return 2./3.;
 		break;
 	default:
+		throw "Ошибка в LAMBDA";
 		break;
 	}
 }
@@ -36,14 +50,21 @@ double GAMMA(int number)
 {
 	switch (number)
 	{
+	//case 0:
+	//	return 0.4;
+		//return 1;
+		/*break;*/
 	case 0:
-		//return 0.4;
-		return 1;
+		return 4;
 		break;
 	case 1:
-
+		return 0;
+		break;
+	case 2:
+		return 1;
 		break;
 	default:
+		throw "Ошибка в GAMMA";
 		break;
 	}
 }
@@ -54,17 +75,44 @@ double GridAndSLAE::TETA(int number, double x, double y, double z)
 {
 	switch (number)
 	{
+	//case 0: // Для теста с 1им КЭ
+	//	return -1. - 2.5 * y - 5. * z - 5. * y * z;
+	//	break;
+	//case 1:
+	//	return 5. + 2.5 * x + 50. * z + 5. * x * z;
+	//	break;
+	//case 2:
+	//	return 150. + 5. * x + 50. * y + 5. * x * y;
+	//	break;
 	case 0:
-		return -1. - 2.5 * y - 5. * z - 5. * y * z;
+		return -2. * x*(z + 1);
 		break;
 	case 1:
-		return 5. + 2.5 * x + 50. * z + 5. * x * z;
+		return -2. * x * z;
 		break;
 	case 2:
-		return 150. + 5. * x + 50. * y + 5. * x * y;
+		return -2. * (1. + x + z + x * z);
+		break;
+	case 3:
+		return 2. * (1. + y + z + y*z);
+		break;
+	case 4:
+		return 2. * (1. + x + y + x*y) ;
+		break;
+	case 5:
+		return 2. * z * (1. + y);
+		break;
+	case 6:
+		return 2. * x * (1. + y);
+		break;
+	case 7:
+		return -2. * x * (1. + y);
+		break;
+	case 8:
+		return -2.*(1. + x + y + x * y);
 		break;
 	default:
-		cout << "Ошибка в TETA";
+		throw "Ошибка в TETA";
 		break;
 	}
 }
@@ -73,17 +121,26 @@ double GridAndSLAE::UBETA(int number, double x, double y, double z)
 {
 	switch (number)
 	{
+	//case 0:// Для теста с 1им КЭ
+	//	return 9.1 + 11.25 * y + 50.5 * z + 30.5 * y * z;
+	//	break;
+	//case 1:
+	//	return 4.5 - 0.05 * x + 25. * z + 0.5 * x * z;
+	//	break;
+	//case 2:
+	//	return -10. - 0.3 * x - 4 * y;
+	//	break;
 	case 0:
-		return 9.1 + 11.25 * y + 50.5 * z + 30.5 * y * z;
+		return 8. * x*(z + 1);
 		break;
 	case 1:
-		return 4.5 - 0.05 * x + 25. * z + 0.5 * x * z;
+		return 11.5*x*z;
 		break;
 	case 2:
-		return -10. - 0.3 * x - 4 * y;
+		return 4.5 * (1. + x + z + x * z);
 		break;
 	default:
-		cout << "Ошибка в UBETA";
+		throw "Ошибка в UBETA";
 		break;
 	}
 }
@@ -172,8 +229,10 @@ void GridAndSLAE::AllocateMemory()
 	b.resize(NoN);
 	x.resize(NoN);
 	al.resize(ja.size());
+	au.resize(ja.size());
 
 	alLU.resize(al.size());
+	auLU.resize(au.size());
 	diLU.resize(NoN);
 	r.resize(NoN);
 	z.resize(NoN);
@@ -293,7 +352,7 @@ void GridAndSLAE::CalculateA_b()
 		// Но я тут заметил, что по сути КЭ, которые "стоят" в одном столбце имеют одинаковое основание
 		// Поэтому достотаточно один раз посчитать Mxy, Gxy, а Mz, Gz, пересчитывать на каждом уровне
 
-		for (int lvl = 0; lvl < NoN_z - 1; lvl++, curFE++) // Здесь как раз за это и отвечает этот цикл
+		for (int lvl = 0; lvl < NoN_z - 1 and curFE < NoN_fe; lvl++, curFE++) // Здесь как раз за это и отвечает этот цикл
 		{
 
 			nodes_global[4] = fe[curFE].node1 + fe[curFE].top * NoN_xy;
@@ -374,13 +433,13 @@ void GridAndSLAE::CalculateA_b()
 				b_local[i] = sum;
 			}
 
-			double Aij, Aii;
+			double Aij;
 			double lambda = LAMBDA(region_cur);
 			double gamma = GAMMA(region_cur);
 			for (int i = 0; i < 8; i++)
 			{
-				Aii = gamma * M_local[i][i] + lambda * G_local[i][i];
-				di[nodes_global[i]] += Aii;
+				Aij = gamma * M_local[i][i] + lambda * G_local[i][i];
+				di[nodes_global[i]] += Aij;
 
 				for (int j = i-1; j >= 0; j--)
 				{
@@ -390,6 +449,7 @@ void GridAndSLAE::CalculateA_b()
 						{
 							Aij = gamma * M_local[i][j] + lambda * G_local[i][j];
 							al[k] += Aij;
+							au[k] += Aij;
 						}
 					}
 				}
@@ -484,7 +544,7 @@ void GridAndSLAE::SecondBoundaryConditions()
 			else if ((nodes_global[0] % NoN_xy) == (nodes_global[2] % NoN_xy)) // значит боковая грань поралельна Oy.
 				h_XorY = y2 - y1;
 			else 
-				cout << "1 Словил какую-ту херь в 2ом краевом\n";
+				throw "1 Словил какую-ту херь в 2ом краевом\n";
 
 			for (int i = 0; i < 2; i++)
 				for (int j = 0; j <= i; j++)
@@ -548,7 +608,7 @@ void GridAndSLAE::SecondBoundaryConditions()
 					M_XYorXZorYZ[i][j] = sign(a0) * (a0 / 36. * M0[i][j] + a1 / 72. * M1[i][j] + a2 / 72. * M2[i][j]);
 		}
 		else
-			"2 Словил какую-ту херь в 2ом краевом\n";
+			throw "2 Словил какую-ту херь в 2ом краевом\n";
 
 		for (int i = 0; i < 4; i++) //Нужно потом более оптимально  умножение сделать
 		{
@@ -641,7 +701,7 @@ void GridAndSLAE::ThirdBoundaryConditions() // ctrl+c -> ctrl+v из SecondBound
 			else if ((nodes_global[0] % NoN_xy) == (nodes_global[2] % NoN_xy)) // значит боковая грань поралельна Oy.
 				h_XorY = y2 - y1;
 			else
-				cout << "1 Словил какую-ту херь в 3ем краевом\n";
+				throw "1 Словил какую-ту херь в 3ем краевом\n";
 
 			for (int i = 0; i < 2; i++)
 				for (int j = 0; j <= i; j++)
@@ -703,17 +763,23 @@ void GridAndSLAE::ThirdBoundaryConditions() // ctrl+c -> ctrl+v из SecondBound
 					M_XYorXZorYZ[i][j] = sign(a0) * (a0 / 36. * M0[i][j] + a1 / 72. * M1[i][j] + a2 / 72. * M2[i][j]);
 		}
 		else
-			"2 Словил какую-ту херь в 3ем краевом\n";
+			throw "2 Словил какую-ту херь в 3ем краевом\n";
 
 		// Добавка в глоб матрицу
 		double beta = ThirdBC[curThirdBC].beta;
 		for (int i = 0; i < 4; i++)
 		{
-			di[nodes_global[i]] += beta * M_XYorXZorYZ[i][i];
+			double AijS3;
+			AijS3 = beta * M_XYorXZorYZ[i][i];
+			di[nodes_global[i]] += AijS3;
 			for (int j = i - 1; j >= 0; j--)
 				for (int k = ia[nodes_global[i]]; k < ia[nodes_global[i] + 1]; k++)
 					if (ja[k] == nodes_global[j])
-						al[k] += beta * M_XYorXZorYZ[i][j];
+					{
+						AijS3 = beta * M_XYorXZorYZ[i][j];
+						al[k] += AijS3;
+						au[k] += AijS3;
+					}					
 		}
 
 		for (int i = 0; i < 4; i++) //Нужно потом более оптимально  умножение сделать
@@ -736,7 +802,7 @@ void GridAndSLAE::ThirdBoundaryConditions() // ctrl+c -> ctrl+v из SecondBound
 
 void GridAndSLAE::FirstBoundaryConditions()
 {
-	for (int curFisrtBC = Nof_FisrtBC-1; curFisrtBC >= 0; curFisrtBC--)
+	for (int curFisrtBC = 0; curFisrtBC < Nof_FisrtBC; curFisrtBC++)
 	{
 		int node = FirstBC[curFisrtBC].node;
 		double ug = FirstBC[curFisrtBC].ug;
@@ -744,10 +810,20 @@ void GridAndSLAE::FirstBoundaryConditions()
 		b[node] = ug;
 		for (int k = ia[node]; k < ia[node + 1]; k++)
 		{
-			int j = ja[k];
-			b[j] -= ug * al[k];
 			al[k] = 0;
 		}
+		for (int curNode = node + 1; curNode < NoN; curNode++)
+		{
+			for (int k = ia[curNode]; k < ia[curNode + 1]; k++)
+			{
+				int j = ja[k];
+				if (ja[k] == node)
+				{
+					au[k] = 0;
+				}
+			}
+		}
+		OutputDense();
 	}
 }
 void GridAndSLAE::GeneratePortrait()
