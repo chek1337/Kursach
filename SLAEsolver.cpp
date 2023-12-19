@@ -72,8 +72,8 @@ void GridAndSLAE::OutputDense()
 				{
 					printf(REALOUTD, 0.0);
 				}
-				//printf(REALOUTD,/* 216 **/ al[j]); // ��� ������� 216
-				printf(REALOUTD, 216 * al[j]); // ��� ������� 216
+				printf(REALOUTD, al[j]); // ��� ������� 216
+			    //printf(REALOUTD, 216 * al[j]); // ��� ������� 216
 				lastj = ja[j] + 1;
 			}
 			for (int j = lastj; j < i; j++)
@@ -82,8 +82,8 @@ void GridAndSLAE::OutputDense()
 			}
 		}
 
-		//printf(REALOUTD, /*216 **/ di[i]); // ��� ������� 216
-		printf(REALOUTD, 216 * di[i]); // ��� ������� 216
+		printf(REALOUTD, di[i]); // ��� ������� 216
+		//printf(REALOUTD, 216 * di[i]); // ��� ������� 216
 
 		for (int j = i + 1; j < NoN; j++)
 		{
@@ -99,8 +99,8 @@ void GridAndSLAE::OutputDense()
 
 					if (ja[k] == i)
 					{
-						//printf(REALOUTD, /*216 **/ au[k]); // ��� ������� 216
-						printf(REALOUTD, 216 * au[k]); // ��� ������� 216
+						printf(REALOUTD, au[k]); // ��� ������� 216
+						//printf(REALOUTD, 216 * au[k]); // ��� ������� 216
 						flagfound = 1;
 						break;
 					}
@@ -109,15 +109,11 @@ void GridAndSLAE::OutputDense()
 					printf(REALOUTD, 0.0);
 			}
 		}
+		printf("|   %.4lf\n", b[i]); // ��� ������� 216
+		//printf("|   %.4lf\n", 216 * b[i]); // ��� ������� 216
 		printf("\n");
 	}
 	printf("\n");
-
-	for (int i = 0; i < NoN; i++)
-	{
-		//printf("%.15lf\n", b[i]); // ��� ������� 216
-		printf("%.15lf\n", 216 * b[i]); // ��� ������� 216
-	}
 }
 
 void GridAndSLAE::OutputLUDense()
@@ -365,6 +361,16 @@ double GridAndSLAE::CalculateRelativeDiscrepancy(double norm)
 	return VectorNorm(tmp) / norm;
 }
 
+void GridAndSLAE::OutputSolutionQ()
+{
+	printf("q = {\n");
+	for (int i = 0; i < NoN - 1; i++)
+	{
+		printf("%.15lf\n", x[i]);
+	}
+	printf("%.15lf\n }\n", x[NoN - 1]);
+}
+
 void GridAndSLAE::MSGForNonSymMatrixWithLuSqP()
 {
 	CalculateLUsq();
@@ -410,4 +416,7 @@ void GridAndSLAE::MSGForNonSymMatrixWithLuSqP()
 	}
 	SolveBackwardLU(auLU, diLU, x, x);
 	printf("%.15lf\n", CalculateRelativeDiscrepancy(normB));
+
+	MatrixVectorMultiplication(x, tmp);
+
 }

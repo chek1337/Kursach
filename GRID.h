@@ -4,8 +4,8 @@
 #include <math.h>
 #include <algorithm>
 
-#define REALOUTD "%.7f\t"
-#define REALOUTDb "%.7f\n"
+#define REALOUTD "%.4lf\t"
+#define REALOUTDb "%.4lf\n"
 using namespace std;
 
 struct Point {
@@ -30,6 +30,7 @@ struct SecondBoundary
 {
     int node1, node2, node3, node4; // x1y1, x2y1, x1y2, x2y2
     int num_teta;
+    int side; // -1 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, 1 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 };
 
 struct ThirdBoundary
@@ -37,23 +38,24 @@ struct ThirdBoundary
     int node1, node2, node3, node4; // x1y1, x2y1, x1y2, x2y2
     int num_ubeta;
     double beta;
+    int side; // 0 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ, 1 - пїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
 };
 
 class GridAndSLAE
 {
 public:
     // NumberOfNodes = NoN
-    int NoN; // Общее кол-во узлов
-    int NoN_xy; // Общее кол-во узлов в плоскости XY
-    int NoN_z; // Общее кол-во узлов на оси Z
-    int NoN_fe; // Общее кол-во конечных элементов на оси Z
+    int NoN; // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ-пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ
+    int NoN_xy; // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ-пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ XY
+    int NoN_z; // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ-пїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ Z
+    int NoN_fe; // пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ-пїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅпїЅпїЅ Z
     int Nof_FisrtBC;
     int Nof_SecondBC;
     int Nof_ThirdBC;
 
-    vector<FiniteElement> fe; // Массив содержащий информацию об о конечном элементе
-    vector<Point> xy; // Массив с координатами сетки в Oxy
-    vector<double> z; // Массив с координатами сетки вдоль оси Z
+    vector<FiniteElement> fe; // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ
+    vector<Point> xy; // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅ Oxy
+    vector<double> z; // пїЅпїЅпїЅпїЅпїЅпїЅ пїЅ пїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅпїЅпїЅ пїЅпїЅпїЅ Z
     vector<FirstBoundary> FirstBC;
     vector<SecondBoundary> SecondBC;
     vector<ThirdBoundary> ThirdBC;
@@ -66,14 +68,11 @@ public:
     void OutputDense();
     void OutputLUDense();
     //void SolveSLAE();
-    
+    void MatrixVectorMultiplication(vector<double>& vectorMult, vector<double>& vectorOut);
     void MSGForNonSymMatrixWithLuSqP();
-    void MatrixUVectorMultiplicationLU(vector<double>& upperTringMat, vector<double>& diag, vector<double>& vectorMult, vector<double>& vectorOut);
-    void TransposedMatrixVectorMultiplication(vector<double>& vectorMult, vector<double>& vectorOut);
-    void CalculateZ_LUsq(vector<double>& vectorOut);
-    double CalculateRelativeDiscrepancy(double norm);
-    void VectorSubtract(vector<double>& first, vector<double>& second, vector<double>& result);
-
+    void OutputSolutionQ();
+    vector<double> x;
+    vector<double> tmp;
 protected:
     int maxiter = 10000;
     vector<int> ia;
@@ -81,24 +80,24 @@ protected:
     vector<double> al;
     vector<double> au;
     vector<double> di;
-    vector<double> x;
+   
     vector<double> b;
     vector<double> r;
     vector<double> z_msg;
-    vector<double> tmp;
+   
     vector<double> x0;
     vector<double> alLU;
     vector<double> auLU;
     vector<double> diLU;
     vector<vector<int>> iaja;
-    double eps = 1e-13;
+    double eps = 1e-20;
     int maxIter = 10000;
 
 
     void GeneratePortrait();
     void VectorCopy(vector<double>& from, vector<double>& to);
     void CalculateRelativeDiscrepancy(vector<double>& vectorMult, vector<double>& vectorOut);
-    void MatrixVectorMultiplication(vector<double>& vectorMult, vector<double>& vectorOut);
+    
     void SolveForwardLU(vector<double>& lowerTringMat, vector<double>& diag, vector<double>& rightVector, vector<double>& vectorX);
     void SolveBackwardLU(vector<double>& upperTringMat, vector<double>& diag, vector<double>& rightVector, vector<double>& vectorX);
     void CalculateLUsq();
@@ -106,10 +105,21 @@ protected:
     double VectorNorm(vector<double>& vector);
     double VectorScalarProduction(vector<double>& vector1, vector<double>& vector2);
 
+   
+    void MatrixUVectorMultiplicationLU(vector<double>& upperTringMat, vector<double>& diag, vector<double>& vectorMult, vector<double>& vectorOut);
+    void TransposedMatrixVectorMultiplication(vector<double>& vectorMult, vector<double>& vectorOut);
+    void CalculateZ_LUsq(vector<double>& vectorOut);
+    double CalculateRelativeDiscrepancy(double norm);
+    void VectorSubtract(vector<double>& first, vector<double>& second, vector<double>& result);
+
+
     double Gauss3_Gxy(int i, int j, double b1, double b2, double b3, double b4, double b5, double b6, double a0, double a1, double a2);
     double Phi(double e, double n, int i, int j, double b1, double b2, double b3, double b4, double b5, double b6, double a0, double a1, double a2);
     double TETA(int number, double x, double y, double z);
     double UBETA(int number, double x, double y, double z);
+    double GAMMA(int number);
+    double LAMBDA(int number);
+    double FUN(int number, double x, double y, double z);
     void AllocateMemory();
 };
 

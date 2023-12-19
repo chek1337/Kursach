@@ -1,155 +1,11 @@
 ﻿#include "GRID.h"
 
-double FUN(int number, double x, double y, double z)
-{
-	switch (number)
-	{
-	/*case 0:
-		return 0.4*(5. + 0.2*x + y + 30.*z + 0.5*x*y + x*z + 10.*y*z + x*y*z);*/
-		//return x + y + z;
-		//break;
-	case 0:
-		return 8.*x*(y*z + z + y + 1.);
-		break;
-	case 1:
-		return 0;
-		break;
-	case 2:
-		return 3.*x*z*(y+1);
-		break;
-	default:
-		throw "Ошибка в FUN";
-		break;
-	}
-}
-
-double LAMBDA(int number)
-{
-	switch (number)
-	{
-	//case 0:
-	//	return 5.;
-		//return 1;
-		/*break;*/
-	case 0:
-		return 1;
-		break;
-	case 1:
-		return 2;
-		break;
-	case 2:
-		return 2./3.;
-		break;
-	default:
-		throw "Ошибка в LAMBDA";
-		break;
-	}
-}
-
-double GAMMA(int number)
-{
-	switch (number)
-	{
-	//case 0:
-	//	return 0.4;
-		//return 1;
-		/*break;*/
-	case 0:
-		return 4;
-		break;
-	case 1:
-		return 0;
-		break;
-	case 2:
-		return 1;
-		break;
-	default:
-		throw "Ошибка в GAMMA";
-		break;
-	}
-}
-
-
-
-double GridAndSLAE::TETA(int number, double x, double y, double z)
-{
-	switch (number)
-	{
-	//case 0: // Для теста с 1им КЭ
-	//	return -1. - 2.5 * y - 5. * z - 5. * y * z;
-	//	break;
-	//case 1:
-	//	return 5. + 2.5 * x + 50. * z + 5. * x * z;
-	//	break;
-	//case 2:
-	//	return 150. + 5. * x + 50. * y + 5. * x * y;
-	//	break;
-	case 0:
-		return -2. * x*(z + 1);
-		break;
-	case 1:
-		return -2. * x * z;
-		break;
-	case 2:
-		return -2. * (1. + x + z + x * z);
-		break;
-	case 3:
-		return 2. * (1. + y + z + y*z);
-		break;
-	case 4:
-		return 2. * (1. + x + y + x*y) ;
-		break;
-	case 5:
-		return 2. * z * (1. + y);
-		break;
-	case 6:
-		return 2. * x * (1. + y);
-		break;
-	case 7:
-		return -2. * x * (1. + y);
-		break;
-	case 8:
-		return -2.*(1. + x + y + x * y);
-		break;
-	default:
-		throw "Ошибка в TETA";
-		break;
-	}
-}
-
-double GridAndSLAE::UBETA(int number, double x, double y, double z)
-{
-	switch (number)
-	{
-	//case 0:// Для теста с 1им КЭ
-	//	return 9.1 + 11.25 * y + 50.5 * z + 30.5 * y * z;
-	//	break;
-	//case 1:
-	//	return 4.5 - 0.05 * x + 25. * z + 0.5 * x * z;
-	//	break;
-	//case 2:
-	//	return -10. - 0.3 * x - 4 * y;
-	//	break;
-	case 0:
-		return 8. * x*(z + 1);
-		break;
-	case 1:
-		return 11.5*x*z;
-		break;
-	case 2:
-		return 4.5 * (1. + x + z + x * z);
-		break;
-	default:
-		throw "Ошибка в UBETA";
-		break;
-	}
-}
-
 
 void GridAndSLAE::InputFromFile(FILE* inFE, FILE* inXY, FILE* inZ, FILE* inFirstBC, FILE* inSecondBC, FILE* inThirdBC)
 {
 	// Запись информации об узлах конечных элементах
 	fscanf_s(inFE, "%d", &NoN_fe);
+
 	fe.resize(NoN_fe);
 	// Мб тут сделать специально сортировку, чтобы номер узлов всегда шли бы на увелечение
 	for (int i = 0; i < NoN_fe; i++)
@@ -198,6 +54,7 @@ void GridAndSLAE::InputFromFile(FILE* inFE, FILE* inXY, FILE* inZ, FILE* inFirst
 		fscanf_s(inSecondBC, "%d", &SecondBC[i].node3);
 		fscanf_s(inSecondBC, "%d", &SecondBC[i].node4);
 		fscanf_s(inSecondBC, "%d", &SecondBC[i].num_teta);
+		fscanf_s(inSecondBC, "%d", &SecondBC[i].side);
 	}
 
 	fscanf_s(inThirdBC, "%d", &Nof_ThirdBC);
@@ -210,6 +67,7 @@ void GridAndSLAE::InputFromFile(FILE* inFE, FILE* inXY, FILE* inZ, FILE* inFirst
 		fscanf_s(inThirdBC, "%d", &ThirdBC[i].node4);
 		fscanf_s(inThirdBC, "%d", &ThirdBC[i].num_ubeta);
 		fscanf_s(inThirdBC, "%lf", &ThirdBC[i].beta);
+		fscanf_s(inThirdBC, "%d", &ThirdBC[i].side);
 	}
 }
 
@@ -313,7 +171,7 @@ void GridAndSLAE::CalculateA_b()
 		nodes_global[2] = fe[curFE].node3 + fe[curFE].bottom * NoN_xy;
 		nodes_global[3] = fe[curFE].node4 + fe[curFE].bottom * NoN_xy;
 
-		double region_cur = fe[curFE].region;
+		int region_cur = fe[curFE].region;
 
 		double x1 = xy[fe[curFE].node1].x;
 		double y1 = xy[fe[curFE].node1].y;
@@ -403,13 +261,6 @@ void GridAndSLAE::CalculateA_b()
 				}
 			}
 
-			// Самое веселое начинается тут
-			// Нужно закинуть элементы из лок. матриц в глоб матрицу
-			// Так как я пока что забил на краевые условия, то
-			// чтобы получить ij элемент матрицы А нужно Aij = Mij + Gij.
-			// Номера узлов и соотв-их им базисных функций мы знаем из fe[i].nodex
-			// То есть задача сводится к вытягиванию номера узла и сопаставлние ему
-			// локальной базисной функции
 
 			f_local[0] = FUN(region_cur, x1, y1, z1); // Вот здесь высока вероятность ошибки
 			f_local[1] = FUN(region_cur, x2, y2, z1); // так как я неявно считаю значения функции
@@ -425,7 +276,7 @@ void GridAndSLAE::CalculateA_b()
 				double sum = 0;
 				for (int j = 0; j < 8; j++)
 				{
-					if (i > j)
+					if (i >= j)
 						sum += f_local[j] * M_local[i][j];
 					else
 						sum += f_local[j] * M_local[j][i];
@@ -441,7 +292,7 @@ void GridAndSLAE::CalculateA_b()
 				Aij = gamma * M_local[i][i] + lambda * G_local[i][i];
 				di[nodes_global[i]] += Aij;
 
-				for (int j = i-1; j >= 0; j--)
+				for (int j = 0; j < i; j++)
 				{
 					for (int k = ia[nodes_global[i]]; k < ia[nodes_global[i]+1]; k++)
 					{ 
@@ -469,161 +320,163 @@ void GridAndSLAE::CalculateA_b()
 
 void GridAndSLAE::SecondBoundaryConditions()
 {
-	vector<double> bS2_local(4, 0);
-	vector<int> nodes_global(4, 0);
-	vector<double> teta_local(4, 0);
-
-	//
-	// Матрицы для боковой грани
-	//
-
-	vector<vector<double>>  MXorY_0{ {2}, {1, 2} };
-	vector<vector<double>>  MXorY;
-	MXorY.resize(2);
-	for (int i = 0; i < 2; i++)
-		MXorY[i].resize(i + 1);
-
-	vector<vector<double>>  Mz_0 = { {2}, {1, 2} };
-	vector<vector<double>>  Mz;
-	Mz.resize(2);
-	for (int i = 0; i < 2; i++)
-		Mz[i].resize(i + 1);
-
-	vector<vector<double>>  M_XYorXZorYZ; 
-	M_XYorXZorYZ.resize(4);
-	for (int i = 0; i < 4; i++)
-		M_XYorXZorYZ[i].resize(i + 1);
-	// 
-	//******************************************
-	// 
-
-	// 
-	// Матрицы для основания
-	// 
-	vector<vector<double>> M0 = { {4}, {2, 4}, {2, 1, 4}, {1, 2, 2, 4} };
-	vector<vector<double>> M1 = { {2}, {2, 6}, {1, 1, 2}, {1, 2, 3, 6} };
-	vector<vector<double>>  M2 = { {2}, {1, 2}, {2, 1, 6}, {1, 2, 3, 6} };
-	// 
-	//******************************************
-	//
-
-	for (int curSecondBC = 0; curSecondBC < Nof_SecondBC; curSecondBC++)
+	if (Nof_SecondBC != 0)
 	{
-		
-		nodes_global[0] = SecondBC[curSecondBC].node1;
-		nodes_global[1] = SecondBC[curSecondBC].node2;
-		nodes_global[2] = SecondBC[curSecondBC].node3;
-		nodes_global[3] = SecondBC[curSecondBC].node4;
-		int num_teta_local = SecondBC[curSecondBC].num_teta;
+		vector<double> bS2_local(4, 0);
+		vector<int> nodes_global(4, 0);
+		vector<double> teta_local(4, 0);
 
-		// Определить что это - боковая грань или основание? 
-		if ((nodes_global[0] % NoN_xy) == (nodes_global[2] % NoN_xy) && (nodes_global[1] % NoN_xy) == (nodes_global[3] % NoN_xy))
-		{
-			// Значит боковая грань
-			// Будем обозначать матрицу массы для x/y как M_XorY (смотря паралельно какой оси находится грань)
-			// Будем искать матрицу массы для краевого условия как M_XorY * Mz
+		//
+		// Матрицы для боковой грани
+		//
 
-			double x1 = xy[nodes_global[0] % NoN_xy].x;
-			double x2 = xy[nodes_global[1] % NoN_xy].x;
-			double y1 = xy[nodes_global[0] % NoN_xy].y;
-			double y2 = xy[nodes_global[1] % NoN_xy].y;
-			double h_XorY = 0;
+		vector<vector<double>>  MXorY_0{ {2}, {1, 2} };
+		vector<vector<double>>  MXorY;
+		MXorY.resize(2);
+		for (int i = 0; i < 2; i++)
+			MXorY[i].resize(i + 1);
 
-			div_t result = div(nodes_global[0], NoN_xy);
-			double z1 = z[result.quot];
-			double z2 = z[result.quot + 1];
-			double h_z = z2 - z1;
-			
-			teta_local[0] = TETA(num_teta_local, x1, y1, z1);
-			teta_local[1] = TETA(num_teta_local, x2, y2, z1);
-			teta_local[2] = TETA(num_teta_local, x1, y1, z2);
-			teta_local[3] = TETA(num_teta_local, x2, y2, z2);
+		vector<vector<double>>  Mz_0 = { {2}, {1, 2} };
+		vector<vector<double>>  Mz;
+		Mz.resize(2);
+		for (int i = 0; i < 2; i++)
+			Mz[i].resize(i + 1);
 
-			if ((nodes_global[0] + 1) == nodes_global[1]) // значит боковая грань поралельна Ox. Я предполагаю что нумерация у узлов корректная
-				h_XorY = x2 - x1;
-			else if ((nodes_global[0] % NoN_xy) == (nodes_global[2] % NoN_xy)) // значит боковая грань поралельна Oy.
-				h_XorY = y2 - y1;
-			else 
-				throw "1 Словил какую-ту херь в 2ом краевом\n";
-
-			for (int i = 0; i < 2; i++)
-				for (int j = 0; j <= i; j++)
-					MXorY[i][j] = h_XorY / 6. * MXorY_0[i][j];
-
-			for (int i = 0; i < 2; i++)
-				for (int j = 0; j <= i; j++)
-					Mz[i][j] = h_z / 6. * Mz_0[i][j];
-
-			// стр 234 кирпича
-			// Вообще можно сделать сразу матрицу MXZorYZ размером 4х4 (стр 233 5.20), мб потом переделаю
-			// если кто-то придумает как это красиво можно в цикле сделать - буду рад
-			// а пока тупо скатаю формулы (при учете того, что у меня нижний треугольник, а в кирпиче верхний)
-			// но лучше перепроверить все равно
-			// UPD: на стр 331 и 333 есть
-			M_XYorXZorYZ[0][0] = MXorY[0][0] * Mz[0][0];
-			M_XYorXZorYZ[1][0] = MXorY[1][0] * Mz[0][0];
-			M_XYorXZorYZ[2][0] = MXorY[0][0] * Mz[1][0];
-			M_XYorXZorYZ[3][0] = MXorY[1][0] * Mz[1][0];
-
-			M_XYorXZorYZ[1][1] = MXorY[1][1] * Mz[0][0];
-			M_XYorXZorYZ[2][1] = MXorY[1][0] * Mz[1][0];
-			M_XYorXZorYZ[3][1] = MXorY[1][1] * Mz[1][0];
-
-			M_XYorXZorYZ[2][2] = MXorY[0][0] * Mz[1][1];
-			M_XYorXZorYZ[3][2] = MXorY[1][0] * Mz[1][1];
-
-			M_XYorXZorYZ[3][3] = MXorY[1][1] * Mz[1][1];
-
-		}
-		else if((nodes_global[0] + 1) == nodes_global[1] && (nodes_global[2] + 1) == nodes_global[3])
-		{
-			// Иначе основание
-
-			double x1 = xy[nodes_global[0] % NoN_xy].x;
-			double y1 = xy[nodes_global[0] % NoN_xy].y;
-
-			double x2 = xy[nodes_global[1] % NoN_xy].x;
-			double y2 = xy[nodes_global[1] % NoN_xy].y;
-
-			double x3 = xy[nodes_global[2] % NoN_xy].x;
-			double y3 = xy[nodes_global[2] % NoN_xy].y;
-
-			double x4 = xy[nodes_global[3] % NoN_xy].x;
-			double y4 = xy[nodes_global[3] % NoN_xy].y;
-
-			div_t result = div(nodes_global[0], NoN_xy);
-			double zlvl = z[result.quot];
-
-			double a0 = ((x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1));
-			double a1 = ((x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3));
-			double a2 = ((y3 - y1) * (x4 - x2) - (x3 - x1) * (y4 - y2));
-
-			teta_local[0] = TETA(num_teta_local, x1, y1, zlvl);
-			teta_local[1] = TETA(num_teta_local, x2, y2, zlvl);
-			teta_local[2] = TETA(num_teta_local, x3, y3, zlvl);
-			teta_local[3] = TETA(num_teta_local, x4, y4, zlvl);
-
-			for (int i = 0; i < 4; i++) // Формирование локальной матрицы массы для Oxy
-				for (int j = 0; j <= i; j++)
-					M_XYorXZorYZ[i][j] = sign(a0) * (a0 / 36. * M0[i][j] + a1 / 72. * M1[i][j] + a2 / 72. * M2[i][j]);
-		}
-		else
-			throw "2 Словил какую-ту херь в 2ом краевом\n";
-
-		for (int i = 0; i < 4; i++) //Нужно потом более оптимально  умножение сделать
-		{
-			double sum = 0;
-			for (int j = 0; j < 4; j++)
-			{
-				if (i > j)
-					sum += teta_local[j] * M_XYorXZorYZ[i][j];
-				else
-					sum += teta_local[j] * M_XYorXZorYZ[j][i];
-			}
-			bS2_local[i] = sum;
-		}
+		vector<vector<double>>  M_XYorXZorYZ;
+		M_XYorXZorYZ.resize(4);
 		for (int i = 0; i < 4; i++)
-			b[nodes_global[i]] += bS2_local[i];
+			M_XYorXZorYZ[i].resize(i + 1);
+		// 
+		//******************************************
+		// 
+
+		// 
+		// Матрицы для основания
+		// 
+		vector<vector<double>> M0 = { {4}, {2, 4}, {2, 1, 4}, {1, 2, 2, 4} };
+		vector<vector<double>> M1 = { {2}, {2, 6}, {1, 1, 2}, {1, 2, 3, 6} };
+		vector<vector<double>>  M2 = { {2}, {1, 2}, {2, 1, 6}, {1, 2, 3, 6} };
+		// 
+		//******************************************
+		//
+
+		for (int curSecondBC = 0; curSecondBC < Nof_SecondBC; curSecondBC++)
+		{
+
+			nodes_global[0] = SecondBC[curSecondBC].node1;
+			nodes_global[1] = SecondBC[curSecondBC].node2;
+			nodes_global[2] = SecondBC[curSecondBC].node3;
+			nodes_global[3] = SecondBC[curSecondBC].node4;
+			int num_teta_local = SecondBC[curSecondBC].num_teta;
+
+			// Определить что это - боковая грань или основание? 
+			if (SecondBC[curSecondBC].side == 1)
+			{
+				// Значит боковая грань
+				// Будем обозначать матрицу массы для x/y как M_XorY (смотря паралельно какой оси находится грань)
+				// Будем искать матрицу массы для краевого условия как M_XorY * Mz
+
+				double x1 = xy[nodes_global[0] % NoN_xy].x;
+				double x2 = xy[nodes_global[1] % NoN_xy].x;
+				double y1 = xy[nodes_global[0] % NoN_xy].y;
+				double y2 = xy[nodes_global[1] % NoN_xy].y;
+				double h_XorY = 0;
+
+				div_t result = div(nodes_global[0], NoN_xy);
+				double z1 = z[result.quot];
+				double z2 = z[result.quot + 1];
+				double h_z = z2 - z1;
+
+				teta_local[0] = TETA(num_teta_local, x1, y1, z1);
+				teta_local[1] = TETA(num_teta_local, x2, y2, z1);
+				teta_local[2] = TETA(num_teta_local, x1, y1, z2);
+				teta_local[3] = TETA(num_teta_local, x2, y2, z2);
+
+				if ((nodes_global[0] + 1) == nodes_global[1]) // значит боковая грань поралельна Ox. Я предполагаю что нумерация у узлов корректная
+					h_XorY = x2 - x1;
+				else if ((nodes_global[0] % NoN_xy) == (nodes_global[2] % NoN_xy)) // значит боковая грань поралельна Oy.
+					h_XorY = y2 - y1;
+				else
+					throw "1 Словил какую-ту херь в 2ом краевом\n";
+
+				for (int i = 0; i < 2; i++)
+					for (int j = 0; j <= i; j++)
+						MXorY[i][j] = h_XorY / 6. * MXorY_0[i][j];
+
+				for (int i = 0; i < 2; i++)
+					for (int j = 0; j <= i; j++)
+						Mz[i][j] = h_z / 6. * Mz_0[i][j];
+
+				// стр 234 кирпича
+				// Вообще можно сделать сразу матрицу MXZorYZ размером 4х4 (стр 233 5.20), мб потом переделаю
+				// а пока тупо скатаю формулы (при учете того, что у меня нижний треугольник, а в кирпиче верхний)
+				// но лучше перепроверить все равно
+				// UPD: на стр 331 и 333 есть
+				M_XYorXZorYZ[0][0] = MXorY[0][0] * Mz[0][0];
+				M_XYorXZorYZ[1][0] = MXorY[1][0] * Mz[0][0];
+				M_XYorXZorYZ[2][0] = MXorY[0][0] * Mz[1][0];
+				M_XYorXZorYZ[3][0] = MXorY[1][0] * Mz[1][0];
+
+				M_XYorXZorYZ[1][1] = MXorY[1][1] * Mz[0][0];
+				M_XYorXZorYZ[2][1] = MXorY[1][0] * Mz[1][0];
+				M_XYorXZorYZ[3][1] = MXorY[1][1] * Mz[1][0];
+
+				M_XYorXZorYZ[2][2] = MXorY[0][0] * Mz[1][1];
+				M_XYorXZorYZ[3][2] = MXorY[1][0] * Mz[1][1];
+
+				M_XYorXZorYZ[3][3] = MXorY[1][1] * Mz[1][1];
+
+			}
+			else if (SecondBC[curSecondBC].side == -1)
+			{
+				// Иначе основание
+
+				double x1 = xy[nodes_global[0] % NoN_xy].x;
+				double y1 = xy[nodes_global[0] % NoN_xy].y;
+
+				double x2 = xy[nodes_global[1] % NoN_xy].x;
+				double y2 = xy[nodes_global[1] % NoN_xy].y;
+
+				double x3 = xy[nodes_global[2] % NoN_xy].x;
+				double y3 = xy[nodes_global[2] % NoN_xy].y;
+
+				double x4 = xy[nodes_global[3] % NoN_xy].x;
+				double y4 = xy[nodes_global[3] % NoN_xy].y;
+
+				div_t result = div(nodes_global[0], NoN_xy);
+				double zlvl = z[result.quot];
+
+				double a0 = ((x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1));
+				double a1 = ((x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3));
+				double a2 = ((y3 - y1) * (x4 - x2) - (x3 - x1) * (y4 - y2));
+
+				teta_local[0] = TETA(num_teta_local, x1, y1, zlvl);
+				teta_local[1] = TETA(num_teta_local, x2, y2, zlvl);
+				teta_local[2] = TETA(num_teta_local, x3, y3, zlvl);
+				teta_local[3] = TETA(num_teta_local, x4, y4, zlvl);
+
+				for (int i = 0; i < 4; i++) // Формирование локальной матрицы массы для Oxy
+					for (int j = 0; j <= i; j++)
+						M_XYorXZorYZ[i][j] = sign(a0) * (a0 / 36. * M0[i][j] + a1 / 72. * M1[i][j] + a2 / 72. * M2[i][j]);
+			}
+			else
+				throw "2 Словил какую-ту херь в 2ом краевом\n";
+
+			for (int i = 0; i < 4; i++) //Нужно потом более оптимально  умножение сделать
+			{
+				double sum = 0;
+				for (int j = 0; j < 4; j++)
+				{
+					if (i >= j)
+						sum += teta_local[j] * M_XYorXZorYZ[i][j];
+					else
+						sum += teta_local[j] * M_XYorXZorYZ[j][i];
+				}
+				bS2_local[i] = sum;
+			}
+			for (int i = 0; i < 4; i++)
+				b[nodes_global[i]] += bS2_local[i];
+		}
 	}
 }
 
@@ -631,171 +484,173 @@ void GridAndSLAE::SecondBoundaryConditions()
 
 void GridAndSLAE::ThirdBoundaryConditions() // ctrl+c -> ctrl+v из SecondBoundaryConditions. 
 {											// Так что если и есть ошибки, то они могли всплыть из-за невдумчивого копирования 
-	vector<double> bS3_local(4, 0);
-	vector<int> nodes_global(4, 0);
-	vector<double> ubeta_local(4, 0);
-
-	//
-	// Матрицы для боковой грани
-	//
-	vector<vector<double>>  MXorY_0{ {2}, {1, 2} };
-	vector<vector<double>>  MXorY;
-	MXorY.resize(2);
-	for (int i = 0; i < 2; i++)
-		MXorY[i].resize(i + 1);
-
-	vector<vector<double>>  Mz_0 = { {2}, {1, 2} };
-	vector<vector<double>>  Mz;
-	Mz.resize(2);
-	for (int i = 0; i < 2; i++)
-		Mz[i].resize(i + 1);
-
-	vector<vector<double>>  M_XYorXZorYZ;
-	M_XYorXZorYZ.resize(4);
-	for (int i = 0; i < 4; i++)
-		M_XYorXZorYZ[i].resize(i + 1);
-
-	// 
-	// Матрицы для основания
-	// 
-	vector<vector<double>> M0 = { {4}, {2, 4}, {2, 1, 4}, {1, 2, 2, 4} };
-	vector<vector<double>> M1 = { {2}, {2, 6}, {1, 1, 2}, {1, 2, 3, 6} };
-	vector<vector<double>>  M2 = { {2}, {1, 2}, {2, 1, 6}, {1, 2, 3, 6} };
-	// 
-	//******************************************
-	//
-	for (int curThirdBC = 0; curThirdBC < Nof_ThirdBC; curThirdBC++)
+	if (Nof_ThirdBC != 0)
 	{
+		vector<double> bS3_local(4, 0);
+		vector<int> nodes_global(4, 0);
+		vector<double> ubeta_local(4, 0);
 
-		nodes_global[0] = ThirdBC[curThirdBC].node1;
-		nodes_global[1] = ThirdBC[curThirdBC].node2;
-		nodes_global[2] = ThirdBC[curThirdBC].node3;
-		nodes_global[3] = ThirdBC[curThirdBC].node4;
+		//
+		// Матрицы для боковой грани
+		//
+		vector<vector<double>>  MXorY_0{ {2}, {1, 2} };
+		vector<vector<double>>  MXorY;
+		MXorY.resize(2);
+		for (int i = 0; i < 2; i++)
+			MXorY[i].resize(i + 1);
 
-		int num_ubeta_local = ThirdBC[curThirdBC].num_ubeta;
-		// Определить что это - боковая грань или основание? 
-		if ((nodes_global[0] % NoN_xy) == (nodes_global[2] % NoN_xy) && (nodes_global[1] % NoN_xy) == (nodes_global[3] % NoN_xy))
-		{
-			// Значит боковая грань
-			// Будем обозначать матрицу массы для x/y как M_XorY (смотря паралельно какой оси находится грань)
-			// Будем искать матрицу массы для краевого условия как M_XorY * Mz
+		vector<vector<double>>  Mz_0 = { {2}, {1, 2} };
+		vector<vector<double>>  Mz;
+		Mz.resize(2);
+		for (int i = 0; i < 2; i++)
+			Mz[i].resize(i + 1);
 
-			double x1 = xy[nodes_global[0] % NoN_xy].x;
-			double x2 = xy[nodes_global[1] % NoN_xy].x;
-			double y1 = xy[nodes_global[0] % NoN_xy].y;
-			double y2 = xy[nodes_global[1] % NoN_xy].y;
-			double h_XorY = 0;
-
-			div_t result = div(nodes_global[0], NoN_xy);
-			double z1 = z[result.quot];
-			double z2 = z[result.quot + 1];
-			double h_z = z2 - z1;
-
-			ubeta_local[0] = UBETA(num_ubeta_local, x1, y1, z1);
-			ubeta_local[1] = UBETA(num_ubeta_local, x2, y2, z1);
-			ubeta_local[2] = UBETA(num_ubeta_local, x1, y1, z2);
-			ubeta_local[3] = UBETA(num_ubeta_local, x2, y2, z2);
-
-			if ((nodes_global[0] + 1) == nodes_global[1]) // значит боковая грань поралельна Ox. Я предполагаю что нумерация у узлов корректная
-				h_XorY = x2 - x1;
-			else if ((nodes_global[0] % NoN_xy) == (nodes_global[2] % NoN_xy)) // значит боковая грань поралельна Oy.
-				h_XorY = y2 - y1;
-			else
-				throw "1 Словил какую-ту херь в 3ем краевом\n";
-
-			for (int i = 0; i < 2; i++)
-				for (int j = 0; j <= i; j++)
-					MXorY[i][j] = h_XorY / 6. * MXorY_0[i][j];
-
-			for (int i = 0; i < 2; i++)
-				for (int j = 0; j <= i; j++)
-					Mz[i][j] = h_z / 6. * Mz_0[i][j];
-
-			// стр 234 кирпича
-			// Вообще можно сделать сразу матрицу MXZorYZ размером 4х4 (стр 233 5.20), мб потом переделаю
-			// если кто-то придумает как это красиво можно в цикле сделать - буду рад
-			// а пока тупо скатаю формулы (при учете того, что у меня нижний треугольник, а в кирпиче верхний)
-			// но лучше перепроверить все равно
-			M_XYorXZorYZ[0][0] = MXorY[0][0] * Mz[0][0];
-			M_XYorXZorYZ[1][0] = MXorY[1][0] * Mz[0][0];
-			M_XYorXZorYZ[2][0] = MXorY[0][0] * Mz[1][0];
-			M_XYorXZorYZ[3][0] = MXorY[1][0] * Mz[1][0];
-
-			M_XYorXZorYZ[1][1] = MXorY[1][1] * Mz[0][0];
-			M_XYorXZorYZ[2][1] = MXorY[1][0] * Mz[1][0];
-			M_XYorXZorYZ[3][1] = MXorY[1][1] * Mz[1][0];
-
-			M_XYorXZorYZ[2][2] = MXorY[0][0] * Mz[1][1];
-			M_XYorXZorYZ[3][2] = MXorY[1][0] * Mz[1][1];
-
-			M_XYorXZorYZ[3][3] = MXorY[1][1] * Mz[1][1];
-		}
-		else if ((nodes_global[0] + 1) == nodes_global[1] && (nodes_global[2] + 1) == nodes_global[3])
-		{
-			// Иначе основание
-
-			double x1 = xy[nodes_global[0] % NoN_xy].x;
-			double y1 = xy[nodes_global[0] % NoN_xy].y;
-
-			double x2 = xy[nodes_global[1] % NoN_xy].x;
-			double y2 = xy[nodes_global[1] % NoN_xy].y;
-
-			double x3 = xy[nodes_global[2] % NoN_xy].x;
-			double y3 = xy[nodes_global[2] % NoN_xy].y;
-
-			double x4 = xy[nodes_global[3] % NoN_xy].x;
-			double y4 = xy[nodes_global[3] % NoN_xy].y;
-
-			div_t result = div(nodes_global[0], NoN_xy);
-			double zlvl = z[result.quot];
-
-			double a0 = ((x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1));
-			double a1 = ((x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3));
-			double a2 = ((y3 - y1) * (x4 - x2) - (x3 - x1) * (y4 - y2));
-
-			ubeta_local[0] = UBETA(num_ubeta_local, x1, y1, zlvl);
-			ubeta_local[1] = UBETA(num_ubeta_local, x2, y2, zlvl);
-			ubeta_local[2] = UBETA(num_ubeta_local, x3, y3, zlvl);
-			ubeta_local[3] = UBETA(num_ubeta_local, x4, y4, zlvl);
-
-			for (int i = 0; i < 4; i++) // Формирование локальной матрицы массы для Oxy
-				for (int j = 0; j <= i; j++)
-					M_XYorXZorYZ[i][j] = sign(a0) * (a0 / 36. * M0[i][j] + a1 / 72. * M1[i][j] + a2 / 72. * M2[i][j]);
-		}
-		else
-			throw "2 Словил какую-ту херь в 3ем краевом\n";
-
-		// Добавка в глоб матрицу
-		double beta = ThirdBC[curThirdBC].beta;
+		vector<vector<double>>  M_XYorXZorYZ;
+		M_XYorXZorYZ.resize(4);
 		for (int i = 0; i < 4; i++)
-		{
-			double AijS3;
-			AijS3 = beta * M_XYorXZorYZ[i][i];
-			di[nodes_global[i]] += AijS3;
-			for (int j = i - 1; j >= 0; j--)
-				for (int k = ia[nodes_global[i]]; k < ia[nodes_global[i] + 1]; k++)
-					if (ja[k] == nodes_global[j])
-					{
-						AijS3 = beta * M_XYorXZorYZ[i][j];
-						al[k] += AijS3;
-						au[k] += AijS3;
-					}					
-		}
+			M_XYorXZorYZ[i].resize(i + 1);
 
-		for (int i = 0; i < 4; i++) //Нужно потом более оптимально  умножение сделать
+		// 
+		// Матрицы для основания
+		// 
+		vector<vector<double>> M0 = { {4}, {2, 4}, {2, 1, 4}, {1, 2, 2, 4} };
+		vector<vector<double>> M1 = { {2}, {2, 6}, {1, 1, 2}, {1, 2, 3, 6} };
+		vector<vector<double>>  M2 = { {2}, {1, 2}, {2, 1, 6}, {1, 2, 3, 6} };
+		// 
+		//******************************************
+		//
+		for (int curThirdBC = 0; curThirdBC < Nof_ThirdBC; curThirdBC++)
 		{
-			double sum = 0;
-			for (int j = 0; j < 4; j++)
+
+			nodes_global[0] = ThirdBC[curThirdBC].node1;
+			nodes_global[1] = ThirdBC[curThirdBC].node2;
+			nodes_global[2] = ThirdBC[curThirdBC].node3;
+			nodes_global[3] = ThirdBC[curThirdBC].node4;
+
+			int num_ubeta_local = ThirdBC[curThirdBC].num_ubeta;
+			// Определить что это - боковая грань или основание? 
+			if (ThirdBC[curThirdBC].side == 1)
 			{
-				if (i > j)
-					sum += ubeta_local[j] * M_XYorXZorYZ[i][j];
+				// Значит боковая грань
+				// Будем обозначать матрицу массы для x/y как M_XorY (смотря паралельно какой оси находится грань)
+				// Будем искать матрицу массы для краевого условия как M_XorY * Mz
+
+				double x1 = xy[nodes_global[0] % NoN_xy].x;
+				double x2 = xy[nodes_global[1] % NoN_xy].x;
+				double y1 = xy[nodes_global[0] % NoN_xy].y;
+				double y2 = xy[nodes_global[1] % NoN_xy].y;
+				double h_XorY = 0;
+
+				div_t result = div(nodes_global[0], NoN_xy);
+				double z1 = z[result.quot];
+				double z2 = z[result.quot + 1];
+				double h_z = z2 - z1;
+
+				ubeta_local[0] = UBETA(num_ubeta_local, x1, y1, z1);
+				ubeta_local[1] = UBETA(num_ubeta_local, x2, y2, z1);
+				ubeta_local[2] = UBETA(num_ubeta_local, x1, y1, z2);
+				ubeta_local[3] = UBETA(num_ubeta_local, x2, y2, z2);
+
+				if ((nodes_global[0] + 1) == nodes_global[1]) // значит боковая грань поралельна Ox. Я предполагаю что нумерация у узлов корректная
+					h_XorY = x2 - x1;
+				else if ((nodes_global[0] % NoN_xy) == (nodes_global[2] % NoN_xy)) // значит боковая грань поралельна Oy.
+					h_XorY = y2 - y1;
 				else
-					sum += ubeta_local[j] * M_XYorXZorYZ[j][i];
+					throw "1 Словил какую-ту херь в 3ем краевом\n";
+
+				for (int i = 0; i < 2; i++)
+					for (int j = 0; j <= i; j++)
+						MXorY[i][j] = h_XorY / 6. * MXorY_0[i][j];
+
+				for (int i = 0; i < 2; i++)
+					for (int j = 0; j <= i; j++)
+						Mz[i][j] = h_z / 6. * Mz_0[i][j];
+
+				// стр 234 кирпича
+				// Вообще можно сделать сразу матрицу MXZorYZ размером 4х4 (стр 233 5.20), мб потом переделаю
+				// а пока тупо скатаю формулы (при учете того, что у меня нижний треугольник, а в кирпиче верхний)
+				// но лучше перепроверить все равно
+				M_XYorXZorYZ[0][0] = MXorY[0][0] * Mz[0][0];
+				M_XYorXZorYZ[1][0] = MXorY[1][0] * Mz[0][0];
+				M_XYorXZorYZ[2][0] = MXorY[0][0] * Mz[1][0];
+				M_XYorXZorYZ[3][0] = MXorY[1][0] * Mz[1][0];
+
+				M_XYorXZorYZ[1][1] = MXorY[1][1] * Mz[0][0];
+				M_XYorXZorYZ[2][1] = MXorY[1][0] * Mz[1][0];
+				M_XYorXZorYZ[3][1] = MXorY[1][1] * Mz[1][0];
+
+				M_XYorXZorYZ[2][2] = MXorY[0][0] * Mz[1][1];
+				M_XYorXZorYZ[3][2] = MXorY[1][0] * Mz[1][1];
+
+				M_XYorXZorYZ[3][3] = MXorY[1][1] * Mz[1][1];
 			}
-			bS3_local[i] = sum;
+			else if (ThirdBC[curThirdBC].side == -1)
+			{
+				// Иначе основание
+
+				double x1 = xy[nodes_global[0] % NoN_xy].x;
+				double y1 = xy[nodes_global[0] % NoN_xy].y;
+
+				double x2 = xy[nodes_global[1] % NoN_xy].x;
+				double y2 = xy[nodes_global[1] % NoN_xy].y;
+
+				double x3 = xy[nodes_global[2] % NoN_xy].x;
+				double y3 = xy[nodes_global[2] % NoN_xy].y;
+
+				double x4 = xy[nodes_global[3] % NoN_xy].x;
+				double y4 = xy[nodes_global[3] % NoN_xy].y;
+
+				div_t result = div(nodes_global[0], NoN_xy);
+				double zlvl = z[result.quot];
+
+				double a0 = ((x2 - x1) * (y3 - y1) - (y2 - y1) * (x3 - x1));
+				double a1 = ((x2 - x1) * (y4 - y3) - (y2 - y1) * (x4 - x3));
+				double a2 = ((y3 - y1) * (x4 - x2) - (x3 - x1) * (y4 - y2));
+
+				ubeta_local[0] = UBETA(num_ubeta_local, x1, y1, zlvl);
+				ubeta_local[1] = UBETA(num_ubeta_local, x2, y2, zlvl);
+				ubeta_local[2] = UBETA(num_ubeta_local, x3, y3, zlvl);
+				ubeta_local[3] = UBETA(num_ubeta_local, x4, y4, zlvl);
+
+				for (int i = 0; i < 4; i++) // Формирование локальной матрицы массы для Oxy
+					for (int j = 0; j <= i; j++)
+						M_XYorXZorYZ[i][j] = sign(a0) * (a0 / 36. * M0[i][j] + a1 / 72. * M1[i][j] + a2 / 72. * M2[i][j]);
+			}
+			else
+				throw "2 Словил какую-ту херь в 3ем краевом\n";
+
+			// Добавка в глоб матрицу
+			double beta = ThirdBC[curThirdBC].beta;
+			for (int i = 0; i < 4; i++)
+			{
+				double AijS3;
+				AijS3 = beta * M_XYorXZorYZ[i][i];
+				di[nodes_global[i]] += AijS3;
+				for (int j = i - 1; j >= 0; j--)
+					for (int k = ia[nodes_global[i]]; k < ia[nodes_global[i] + 1]; k++)
+						if (ja[k] == nodes_global[j])
+						{
+							AijS3 = beta * M_XYorXZorYZ[i][j];
+							al[k] += AijS3;
+							au[k] += AijS3;
+						}
+			}
+
+			for (int i = 0; i < 4; i++) //Нужно потом более оптимально  умножение сделать
+			{
+				double sum = 0;
+				for (int j = 0; j < 4; j++)
+				{
+					if (i > j)
+						sum += ubeta_local[j] * M_XYorXZorYZ[i][j];
+					else
+						sum += ubeta_local[j] * M_XYorXZorYZ[j][i];
+				}
+				bS3_local[i] = sum;
+			}
+			for (int i = 0; i < 4; i++)
+				b[nodes_global[i]] += beta * bS3_local[i];
 		}
-		for (int i = 0; i < 4; i++)
-			b[nodes_global[i]] += beta * bS3_local[i];
 	}
 }
 
@@ -823,7 +678,7 @@ void GridAndSLAE::FirstBoundaryConditions()
 				}
 			}
 		}
-		OutputDense();
+		//OutputDense();
 	}
 }
 void GridAndSLAE::GeneratePortrait()

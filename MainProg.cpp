@@ -1,14 +1,24 @@
-#include "GRID.h"
+//#include "GRID.h"
+#include "TESTS/TEST_x2/TEST_x2.h"
+#include "string"
+
+string path = "TESTS\\TEST_x2\\";
+string FE = path + "FE.txt";
+string XY = path + "XY.txt";
+string Z = path + "Z.txt";
+string FBC = path + "FirstBC.txt";
+string SBC = path + "SecondBC.txt";
+string TBC = path + "ThirdBC.txt";
 
 int main()
 {
 	FILE* inFE, * inXY, * inZ, * inFirstBC, * inSecondBC, * inThirdBC;
-	fopen_s(&inFE, "FE2.txt", "r");
-	fopen_s(&inXY, "XY2.txt", "r");
-	fopen_s(&inZ, "Z2.txt", "r");
-	fopen_s(&inFirstBC, "inFirstBC2.txt", "r");
-	fopen_s(&inSecondBC, "inSecondBC2.txt", "r");
-	fopen_s(&inThirdBC, "inThirdBC2.txt", "r");
+	fopen_s(&inFE, FE.c_str(), "r");
+	fopen_s(&inXY, XY.c_str(), "r");
+	fopen_s(&inZ, Z.c_str(), "r");
+	fopen_s(&inFirstBC, FBC.c_str(), "r");
+	fopen_s(&inSecondBC, SBC.c_str(), "r");
+	fopen_s(&inThirdBC, TBC.c_str(), "r");
 	GridAndSLAE grid;
 	grid.InputFromFile(inFE, inXY, inZ, inFirstBC, inSecondBC, inThirdBC);
 
@@ -20,4 +30,6 @@ int main()
 
 	grid.MSGForNonSymMatrixWithLuSqP();
 	grid.OutputDense();
+	grid.OutputSolutionQ();
+
 }
