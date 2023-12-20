@@ -38,7 +38,7 @@ struct ThirdBoundary
     int node1, node2, node3, node4; // x1y1, x2y1, x1y2, x2y2
     int num_ubeta;
     double beta;
-    int side; // 0 - ���������, 1 - ������� �����
+    int side; // -1 - ���������, 1 - ������� �����
 };
 
 class GridAndSLAE

@@ -1,12 +1,12 @@
 #pragma once
-#include "C:\Users\Afina\source\repos\Kursach\Kurs_1\GRID.h"
+#include "GRID.h"
 #include "math.h"
 double GridAndSLAE::FUN(int number, double x, double y, double z)
 {
 	switch (number)
 	{
 	case 0:
-		return 2*y*cos(z);
+		return x*x*x + y*y*y + z*z*z - (6*x + 6*y + 6*z);
 		break;
 	default:
 		throw "������ � FUN";

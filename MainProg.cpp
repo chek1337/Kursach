@@ -1,8 +1,8 @@
 //#include "GRID.h"
-#include "TESTS\TEST_lambda\TEST_lambda.h"
+#include "TESTS\\TEST_aprox_xyz\TEST_aprox_xyz.h"
 #include "string"
 
-string path = "TESTS\\TEST_lambda\\";
+string path = "TESTS\\TEST_aprox_xyz\\h3_XYZ\\";
 string FE = path + "FE.txt";
 string XY = path + "XY.txt";
 string Z = path + "Z.txt";
