@@ -1,8 +1,8 @@
 //#include "GRID.h"
-#include "TESTS/TEST_x2/TEST_x2.h"
+#include "TESTS\TEST_lambda\TEST_lambda.h"
 #include "string"
 
-string path = "TESTS\\TEST_x2\\";
+string path = "TESTS\\TEST_lambda\\";
 string FE = path + "FE.txt";
 string XY = path + "XY.txt";
 string Z = path + "Z.txt";
@@ -26,10 +26,10 @@ int main()
 	grid.SecondBoundaryConditions();
 	grid.ThirdBoundaryConditions();
 	grid.FirstBoundaryConditions();
-	grid.OutputDense();
+	//grid.OutputDense();
 
 	grid.MSGForNonSymMatrixWithLuSqP();
-	grid.OutputDense();
+	//grid.OutputDense();
 	grid.OutputSolutionQ();
 
 }

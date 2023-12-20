@@ -171,7 +171,7 @@ void GridAndSLAE::CalculateA_b()
 		nodes_global[2] = fe[curFE].node3 + fe[curFE].bottom * NoN_xy;
 		nodes_global[3] = fe[curFE].node4 + fe[curFE].bottom * NoN_xy;
 
-		int region_cur = fe[curFE].region;
+		
 
 		double x1 = xy[fe[curFE].node1].x;
 		double y1 = xy[fe[curFE].node1].y;
@@ -212,6 +212,7 @@ void GridAndSLAE::CalculateA_b()
 
 		for (int lvl = 0; lvl < NoN_z - 1 and curFE < NoN_fe; lvl++, curFE++) // Здесь как раз за это и отвечает этот цикл
 		{
+			int region_cur = fe[curFE].region;
 
 			nodes_global[4] = fe[curFE].node1 + fe[curFE].top * NoN_xy;
 			nodes_global[5] = fe[curFE].node2 + fe[curFE].top * NoN_xy;

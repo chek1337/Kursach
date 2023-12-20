@@ -5,10 +5,10 @@ double GridAndSLAE::FUN(int number, double x, double y, double z)
 	switch (number)
 	{
 	case 0:
-		return 2 * (x * y * z + 2 * x * y + 3 * y * z + 4);
+		return 8 * x * (y * z + z + y + 1);
 		break;
 	case 1:
-		return 3 * 0.1 * (x * y * z + 2 * x * y + 3 * y * z);
+		return 3 * x * z * (y + 1);
 		break;
 
 	default:
@@ -25,7 +25,7 @@ double GridAndSLAE::LAMBDA(int number)
 		return 1.;
 		break;
 	case 1:
-		return 10.;
+		return 2./3.;
 		break;
 	default:
 		throw "ќшибка в LAMBDA";
@@ -38,10 +38,10 @@ double GridAndSLAE::GAMMA(int number)
 	switch (number)
 	{
 	case 0:
-		return 2.;
+		return 4.;
 		break;
 	case 1:
-		return 3.;
+		return 1.;
 		break;
 	default:
 		throw "ќшибка в GAMMA";
@@ -56,18 +56,21 @@ double GridAndSLAE::TETA(int number, double x, double y, double z)
 	switch (number)
 	{
 	case 0:
-		return -(y*z+2*y);
+		return -2 * x * (z + 1);;
 		break;
 	case 1:
-		return x*z+2*x+3*z;
+		return -2*x*z;
 		break;
 	case 2:
-		return x * z + 2 * x + 3 * z;
+		return 2 * (y * z + z + y + 1);
+		break;
 	case 3:
-		return x * y + 3 * y;
+		return 2*z*(1+y);
 		break;
 	case 4:
-		return x * y + 3 * y;
+		return 2*x*(1+y);
+	case 5:
+		return -2*x*(1+y);
 		break;
 	default:
 		throw "ќшибка в TETA";
@@ -80,18 +83,10 @@ double GridAndSLAE::UBETA(int number, double x, double y, double z)
 	switch (number)
 	{
 	case 0:// ƒл€ теста с 1им  Ё
-		return 0.1 * (x * y * z + 2 * x * y + 3 * y * z) + (y * z + 2 * y) / 2;
+		return 8 * x * (z + 1);
 		break;
 	case 1:
-		return x * y * z + 2 * x * y + 3 * y * z + 4 - (x * z + 2 * x + 3 * z) / 2;
-		break;
-	case 2:
-		return 0.1 * (x * y * z + 2 * x * y + 3 * y * z) - (x * z + 2 * x + 3 * z) / 2;
-	case 3:
-		return  x * y * z + 2 * x * y + 3 * y * z + 4 - (x * y + 3 * y) / 2;
-		break;
-	case 4:
-		return  0.1*(x * y * z + 2 * x * y + 3 * y * z + 4) - (x * y + 3 * y) / 2;
+		return 11.5 * x * z;
 		break;
 	default:
 		throw "ќшибка в UBETA";
