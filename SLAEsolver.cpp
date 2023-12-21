@@ -371,6 +371,14 @@ void GridAndSLAE::OutputSolutionQ()
 	printf("%.15lf\n }\n", x[NoN - 1]);
 }
 
+void GridAndSLAE::OutputSolutionQinFile(FILE *out)
+{
+	for (int i = 0; i < NoN; i++)
+	{
+		fprintf_s(out, "%.15lf\n", x[i]);
+	}
+}
+
 void GridAndSLAE::MSGForNonSymMatrixWithLuSqP()
 {
 	CalculateLUsq();

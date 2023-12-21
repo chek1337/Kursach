@@ -73,6 +73,7 @@ public:
     void OutputSolutionQ();
     vector<double> x;
     vector<double> tmp;
+    void OutputSolutionQinFile(FILE* out);
 protected:
     int maxiter = 10000;
     vector<int> ia;
@@ -95,6 +96,7 @@ protected:
 
 
     void GeneratePortrait();
+   
     void VectorCopy(vector<double>& from, vector<double>& to);
     void CalculateRelativeDiscrepancy(vector<double>& vectorMult, vector<double>& vectorOut);
     
