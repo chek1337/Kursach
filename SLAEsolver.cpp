@@ -1,55 +1,5 @@
 ﻿#include "GRID.h"
 
-//void GridAndSLAE::Input(FILE* paramf, FILE* iaf, FILE* jaf, FILE* alf, FILE* auf, FILE* dif, FILE* bf) {
-//	fscanf_s(paramf, "%d", &NoN);
-//	fscanf_s(paramf, "%d", &maxiter);
-//	fscanf_s(paramf, "%lf", &eps);
-//
-//	ia.resize(NoN + 1);
-//	for (int i = 0; i <= NoN; i++)
-//		fscanf_s(iaf, "%d", &ia[i]);
-//	int nProfile = ia[NoN] - ia[0];
-//	ja.resize(nProfile);
-//	for (int i = 0; i < nProfile; i++)
-//		fscanf_s(jaf, "%d", &ja[i]);
-//
-//	if (ia[0]) {
-//		for (int i = 0; i <= NoN; i++)
-//			ia[i]--;
-//		for (int i = 0; i < nProfile; i++)
-//			ja[i]--;
-//	}
-//
-//	al.resize(nProfile);
-//	alLU.resize(nProfile);
-//	for (int i = 0; i < nProfile; i++)
-//		fscanf_s(alf, "%lf", &al[i]);
-//
-//	au.resize(nProfile);
-//	auLU.resize(nProfile);
-//	for (int i = 0; i < nProfile; i++)
-//		fscanf_s(auf, "%lf", &au[i]);
-//
-//	di.resize(NoN);
-//	diLU.resize(NoN);
-//	for (int i = 0; i < NoN; i++)
-//		fscanf_s(dif, "%lf", &di[i]);
-//	b.resize(NoN);
-//	for (int i = 0; i < NoN; i++)
-//		fscanf_s(bf, "%lf", &b[i]);
-//
-//
-//	x.resize(NoN);
-//	r.resize(NoN);
-//	z.resize(NoN);
-//	tmp.resize(NoN);
-//	x0.resize(NoN);
-//	//for (int i = 0; i < n; i++)
-//	//	x0[i] = 0;
-//}
-//
-
-
 void GridAndSLAE::OutputDense()
 {
 	int flagfound = 0;

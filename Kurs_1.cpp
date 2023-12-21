@@ -398,7 +398,7 @@ void GridAndSLAE::SecondBoundaryConditions()
 				else if ((nodes_global[0] % NoN_xy) == (nodes_global[2] % NoN_xy)) // значит боковая грань поралельна Oy.
 					h_XorY = y2 - y1;
 				else
-					throw "1 Словил какую-ту херь в 2ом краевом\n";
+					throw "1 Словил ошибку 2ом краевом\n";
 
 				for (int i = 0; i < 2; i++)
 					for (int j = 0; j <= i; j++)
@@ -461,7 +461,7 @@ void GridAndSLAE::SecondBoundaryConditions()
 						M_XYorXZorYZ[i][j] = sign(a0) * (a0 / 36. * M0[i][j] + a1 / 72. * M1[i][j] + a2 / 72. * M2[i][j]);
 			}
 			else
-				throw "2 Словил какую-ту херь в 2ом краевом\n";
+				throw "2 Словил ошибку в 2ом краевом\n";
 
 			for (int i = 0; i < 4; i++) //Нужно потом более оптимально  умножение сделать
 			{
@@ -557,7 +557,7 @@ void GridAndSLAE::ThirdBoundaryConditions() // ctrl+c -> ctrl+v из SecondBound
 				else if ((nodes_global[0] % NoN_xy) == (nodes_global[2] % NoN_xy)) // значит боковая грань поралельна Oy.
 					h_XorY = y2 - y1;
 				else
-					throw "1 Словил какую-ту херь в 3ем краевом\n";
+					throw "1 Словил ошибку в 3ем краевом\n";
 
 				for (int i = 0; i < 2; i++)
 					for (int j = 0; j <= i; j++)
@@ -618,7 +618,7 @@ void GridAndSLAE::ThirdBoundaryConditions() // ctrl+c -> ctrl+v из SecondBound
 						M_XYorXZorYZ[i][j] = sign(a0) * (a0 / 36. * M0[i][j] + a1 / 72. * M1[i][j] + a2 / 72. * M2[i][j]);
 			}
 			else
-				throw "2 Словил какую-ту херь в 3ем краевом\n";
+				throw "2 Словил ошибку в 3ем краевом\n";
 
 			// Добавка в глоб матрицу
 			double beta = ThirdBC[curThirdBC].beta;

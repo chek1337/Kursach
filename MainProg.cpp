@@ -1,8 +1,8 @@
 //#include "GRID.h"
-#include "TESTS\TEST_aprox_xxycos\TEST_aprox_xxycos.h"
+#include "TESTS\TEST_aprox_x3_y3_z3\TEST_aprox_x3_y3_z3.h"
 #include "string"
 
-string path = "TESTS\\TEST_aprox_xxycos\\h6_XYZ\\";
+string path = "TESTS\\TEST_aprox_x3_y3_z3\\h2_XYZ\\";
 string FE = path + "FE.txt";
 string XY = path + "XY.txt";
 string Z = path + "Z.txt";
@@ -31,7 +31,7 @@ int main()
 
 	grid.MSGForNonSymMatrixWithLuSqP();
 	//grid.OutputDense();
-	//grid.OutputSolutionQ();
-	grid.OutputSolutionQinFile(outQ);
+	grid.OutputSolutionQ();
+	//grid.OutputSolutionQinFile(outQ);
 
 }
